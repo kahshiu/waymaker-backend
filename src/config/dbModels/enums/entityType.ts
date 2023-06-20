@@ -1,4 +1,4 @@
-export const entityType = {
-    "INDIVIDUAL": 1,
-    "COMPANY": 2,
-} as const
+export enum EntityType {
+    "INDIVIDUAL" = 1,
+    "COMPANY" = 2,
+}
