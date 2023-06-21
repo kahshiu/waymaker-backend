@@ -3,57 +3,52 @@ import { Next } from "oak/middleware.ts";
 import { Router } from "oak/router.ts";
 import { IController } from "./interfaces/IController.ts";
 import { routeChaining } from "../helpers/string.ts";
+import { HTTP } from "../helpers/HTTP.ts";
 import { EntityService } from "../services/EntityService.ts";
+import { HTTPPayload } from "../helpers/HTTPPayload.ts";
 
 export class EntityController implements IController {
     public baseRoute: (route: string) => string;
     public entityService: EntityService;
 
     constructor () {
-        this.baseRoute = routeChaining("/entity");
+        this.baseRoute = routeChaining("api/entity");
         this.entityService = new EntityService();
     }
 
     registerRoutes (router: Router) {
-        router.get("/individual/:id", async (ctx: Context, next: Next) => {
-            await this.getIndividual(ctx);
-            await next();
-        });
-        router.get("/company/:id", async (ctx: Context, next: Next) => {
-            await this.getCompany(ctx);
-            await next();
-        });
+        router.get("/individual/:id", (ctx: Context, next: Next) => this.getIndividual(ctx, next));
+        router.get("/company/:id", (ctx: Context, next: Next) => this.getCompany(ctx, next));
     }
 
-    async getIndividual(ctx: Context) {
+    // NOTE:
+    // 1. validation error logged here
+    // 2. http response
+    private isValidId (ctx: Context) {
+        const entityId = ctx?.params?.id; 
+        return entityId > 0;
+    }
+    async getIndividual(ctx: Context, next: Next) {
+        const isValid = this.isValidId(ctx);
+        if(!isValid) {
+            HTTP.BadResponse(ctx, { data: {"error": "Bad Request"} });
+            return;
+        }
         const entityId = ctx?.params?.id
-        ctx.response.status
-        // return error;
         const result = await this.entityService.getIndividual(entityId);
-        ctx.response.body = {data: result};
+        HTTP.OkResponse(ctx, { payload: HTTPPayload(result?.[0] ?? {})})
+        await next();
     }
 
-    async getCompany(ctx: Context) {
+    async getCompany(ctx: Context, next: Next) {
+        const isValid = this.isValidId(ctx);
+        if(!isValid) {
+            HTTP.BadResponse(ctx, { data: {"error": "Bad Request"} });
+            return;
+        }
         const entityId = ctx.params.id;
         const result = await this.entityService.getCompany(entityId);
-        ctx.response.body = {data: result};
+        HTTP.OkResponse(ctx, { payload: HTTPPayload(result?.[0] ?? {})})
+        await next();
     }
-}
-
-export class HTTP {
-    constructor () {
-
-    }
-
-    static basicRespond (ctx: Context, params: any) {
-        const _data = params?.data ?? {};
-        const _contentType = params?.contentType ?? "application/json";
-
-        ctx.response.headers.set("Content-Type", _contentType)
-        ctx.response.body = _data;
-    } 
-
-    static okRespond (ctx, options) {
-
-    } 
 }
