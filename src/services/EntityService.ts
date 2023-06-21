@@ -1,26 +1,29 @@
 import { CompanyDto } from "../config/dbModels/dtos/entity/CompanyDto.ts";
 import { IndividualDto } from "../config/dbModels/dtos/entity/IndividualDto.ts";
 import { routeChaining } from "../helpers/string.ts";
-import { LogConsole } from "../middleware/logger/LogHelpers.ts";
+import { LogConsole, LogService } from "../middleware/logger/LogHelpers.ts";
 import { EntityRepository } from "../repository/EntityRepository.ts";
 
 export class EntityService {
     private entityRepository: EntityRepository;
-    public label = routeChaining("EntityService");
+    public serviceName = "EntityService";
 
     constructor () {
         this.entityRepository = new EntityRepository();
     }
 
+    // NOTE: database errors logged here
     async getCompany (entityId: number) {
-        const label = this.label(".getCompany");
+        const methodName = "getCompany";
+        const label = `${this.serviceName}.${methodName}`;
+
         const dto = new CompanyDto();
         dto.entityId = entityId;
         const params = { dto };
+
         try {
             const result = await this.entityRepository.selectCompany(params);
-            LogConsole.debug(label, `command: ${result.command}, count: ${result.rowCount}`);
-            LogConsole.warn(label, result.warnings);
+            LogService(label, result);
             return result?.rows ?? [];
 
         } catch (e) {
@@ -29,14 +32,16 @@ export class EntityService {
     }
 
     async getIndividual (entityId: number) {
-        const label = this.label(".getIndividual");
+        const methodName = "getIndividual";
+        const label = `${this.serviceName}.${methodName}`;
+
         const dto = new IndividualDto();
         dto.entityId = entityId;
         const params = { dto }
+
         try {
             const result = await this.entityRepository.selectIndividual(params);
-            LogConsole.debug(label, `command: ${result.command}, count: ${result.rowCount}`);
-            LogConsole.warn(label, result.warnings);
+            LogService(label, result);
             return result?.rows ?? [];
 
         } catch (e) {

@@ -1,4 +1,5 @@
 import { Context } from "oak/mod.ts";
+import { LogConsole } from "../middleware/logger/LogHelpers.ts";
 
 export class HTTP {
     static BaseResponse (ctx: Context, params: any) {
@@ -27,6 +28,7 @@ export class HTTP {
     } 
 
     static BadResponse (ctx: Context, params: any) {
+        LogConsole.error("Bad request: ", ctx.request.url);
         this.BaseResponse(ctx, {
             ...params,
             statusCode: 400,
@@ -34,6 +36,7 @@ export class HTTP {
     } 
 
     static UnauthResponse (ctx: Context, params: any) {
+        LogConsole.error("Unauthenticated request: ", ctx.request.url);
         this.BaseResponse(ctx, {
             ...params,
             statusCode: 401,
@@ -41,6 +44,7 @@ export class HTTP {
     } 
 
     static ForbiddenResponse (ctx: Context, params: any) {
+        LogConsole.error("Forbidden request: ", ctx.request.url);
         this.BaseResponse(ctx, {
             ...params,
             statusCode: 403,
@@ -48,6 +52,7 @@ export class HTTP {
     } 
 
     static NotFoundResponse (ctx: Context, params: any) {
+        LogConsole.error("Request not found: ", ctx.request.url);
         this.BaseResponse(ctx, {
             ...params,
             statusCode: 404,
@@ -55,6 +60,7 @@ export class HTTP {
     } 
 
     static InternalErrorResponse (ctx: Context, params: any) {
+        LogConsole.error("Internal error request: ", ctx.request.url);
         this.BaseResponse(ctx, {
             ...params,
             statusCode: 500,
@@ -62,6 +68,7 @@ export class HTTP {
     } 
 
     static NotImplementedResponse (ctx: Context, params: any) {
+        LogConsole.error("Not implemented: ", ctx.request.url);
         this.BaseResponse(ctx, {
             ...params,
             statusCode: 501,

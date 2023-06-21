@@ -1,6 +1,14 @@
+import { QueryObject } from "../../repository/interfaces/common.ts";
 import { LogAdapter } from "./LogAdapter.ts";
 
 export const LogConsole = new LogAdapter(console); 
+
+export const LogService = <T>(label: string, result: QueryObject<T>) => {
+    LogConsole.debug(`${label} command: `, result.command);
+    LogConsole.debug(`${label} text: `, result.query.text);
+    LogConsole.debug(`${label} count: `, result.rowCount);
+    LogConsole.warn(`${label} warning: `, result.warnings);
+}
 
 export const LogMiddleware = (logger: LogAdapter) => {
     return async (ctx: any, next: any) => {
