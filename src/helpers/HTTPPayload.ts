@@ -1,14 +1,14 @@
-export const HTTPPayload = <TData>(data: TData) => {
-    const status = data && Object.keys(data).length > 0 ? "OK": "BLANK";
+export const HTTPPayload = <TPayload>(payload: TPayload) => {
+    const status = payload && Object.keys(payload).length > 0 ? "OK": "BLANK";
     return {
         status,
-        data,
+        payload,
     }
 }
-export const HTTPPayloadArray = <TData>(data: TData[]) => {
-    const status = data.length > 0 ? "OK": "BLANK";
+export const HTTPPayloadArray = <TPayload>(payload: TPayload[]) => {
+    const status = payload.length > 0 ? "OK": "BLANK";
     return {
         status,
-        data,
+        payload,
     }
 }
