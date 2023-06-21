@@ -1,7 +1,7 @@
 import { Router } from "oak/router.ts";
-import { routeChaining } from "./helper.ts";
 import { IController } from "./interfaces/IController.ts";
 import { VERSION } from "../config/env.ts";
+import { routeChaining } from "../helpers/string.ts";
 
 export class Diagnostic implements IController {
     public baseRoute: (route: string) => string;

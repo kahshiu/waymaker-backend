@@ -1,6 +1,6 @@
 import { Application, Router } from "oak/mod.ts";
 import { registerAll } from "./routes/index.ts";
-import { LogConsole, LogMiddleware } from "./middleware/logger/LogSingleton.ts";
+import { LogConsole, LogMiddleware } from "./middleware/logger/LogHelpers.ts";
 
 const HeckName = "HeckerApp";
 const HeckApp = new Application();

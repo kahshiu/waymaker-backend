@@ -34,7 +34,7 @@ export class EntityRepository {
 
         return _client.queryObject({
             text: `
-                select d ${_cols}
+                select ${_cols}
                 from entities 
                 where entity_id = ${_filters.entityId}
             `,

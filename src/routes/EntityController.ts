@@ -1,8 +1,8 @@
 import { Context } from "oak/mod.ts";
 import { Next } from "oak/middleware.ts";
 import { Router } from "oak/router.ts";
-import { routeChaining } from "./helper.ts";
 import { IController } from "./interfaces/IController.ts";
+import { routeChaining } from "../helpers/string.ts";
 import { EntityService } from "../services/EntityService.ts";
 
 export class EntityController implements IController {
@@ -30,13 +30,13 @@ export class EntityController implements IController {
         ctx.response.status
         // return error;
         const result = await this.entityService.getIndividual(entityId);
-        ctx.response.body = {data: result.rows};
+        ctx.response.body = {data: result};
     }
 
     async getCompany(ctx: Context) {
         const entityId = ctx.params.id;
         const result = await this.entityService.getCompany(entityId);
-        ctx.response.body = {data: result.rows};
+        ctx.response.body = {data: result};
     }
 }
 

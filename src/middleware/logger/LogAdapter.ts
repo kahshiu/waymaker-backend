@@ -1,16 +1,20 @@
+import { ENV } from "../../config/env.ts";
+
 export class LogAdapter {
     logger: any;
 
     constructor(logger: any) {
-        this.logger = logger;
+      this.logger = logger;
     }
 
     info(title: string, message?: any) {
-       this.logger.info(title, message);
+      this.logger.info(title, message);
     }
 
     debug(title: string, message?: any) {
-       this.logger.debug(title, message);
+      if(ENV === "development") {
+         this.logger.debug(title, message);
+      }
     }
 
     warn(title: string, message?: any) {
