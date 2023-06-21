@@ -1,41 +1,17 @@
-import { Application, Router, ResponseBody } from "./deps.ts";
-import { LogAdapter, LogMiddleware } from "./middleware/logger/LogAdapter.ts";
-import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
+import { Application, Router } from "oak/mod.ts";
+import { registerAll } from "./routes/index.ts";
+import { LogConsole, LogMiddleware } from "./middleware/logger/LogSingleton.ts";
 
 const HeckName = "HeckerApp";
 const HeckApp = new Application();
 const HeckPort = 8000;
-const HeckLogger = new LogAdapter(console); 
 
+const router: Router = new Router();
+registerAll(router);
 
-const client = new Client({
-  hostname: Deno.env.get("DB_HOST"),
-  port: Deno.env.get("DB_PORT"),
-  user: Deno.env.get("DB_USERNAME"),
-  password: Deno.env.get("DB_PASSWORD"),
-  database: Deno.env.get("DB_DBNAME"),
-});
-await client.connect();
-
-const array_result = await client.queryArray("select version();");
-await client.end();
-
-
-const router = new Router();
-router.get("/", (ctx) => {
-  ctx.response.body = {greeting: "hello world 1234124"}
-})
-router.get("/version", (ctx) => {
-  ctx.response.body = {postgresql: array_result}
-})
-
-HeckApp.use(LogMiddleware(HeckLogger));
+HeckApp.use(LogMiddleware(LogConsole));
 HeckApp.use(router.routes());
 HeckApp.use(router.allowedMethods());
-
-
-
-
 
 /*
 HeckApp.use(async (ctx, next) => {
