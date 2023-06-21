@@ -1,7 +1,6 @@
 import { CompanyDto } from "../config/dbModels/dtos/entity/CompanyDto.ts";
 import { IndividualDto } from "../config/dbModels/dtos/entity/IndividualDto.ts";
-import { routeChaining } from "../helpers/string.ts";
-import { LogConsole, LogService } from "../middleware/logger/LogHelpers.ts";
+import { LogConsole } from "../middleware/logger/LogHelpers.ts";
 import { EntityRepository } from "../repository/EntityRepository.ts";
 
 export class EntityService {
@@ -23,7 +22,6 @@ export class EntityService {
 
         try {
             const result = await this.entityRepository.selectCompany(params);
-            LogService(label, result);
             return result?.rows ?? [];
 
         } catch (e) {
@@ -41,7 +39,6 @@ export class EntityService {
 
         try {
             const result = await this.entityRepository.selectIndividual(params);
-            LogService(label, result);
             return result?.rows ?? [];
 
         } catch (e) {

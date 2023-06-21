@@ -1,5 +1,9 @@
 import { PoolClient, Transaction } from "pg/mod.ts";
 
+export interface QueryParams {
+    text: string; 
+    fields: string[]
+}
 export interface SqlQuery<IDtoVals, IEntVals, IResult> {
     (
         params: {
@@ -9,7 +13,6 @@ export interface SqlQuery<IDtoVals, IEntVals, IResult> {
         client?: PoolClient | Transaction
     ): Promise<IResult>
 }
-
 export interface QueryObject<TObject> {
     query: any;
     command: string;

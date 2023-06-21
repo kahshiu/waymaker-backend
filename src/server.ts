@@ -6,12 +6,19 @@ const HeckName = "HeckerApp";
 const HeckApp = new Application();
 const HeckPort = 8000;
 
+HeckApp.addEventListener('listen', () => {
+  LogConsole.info(HeckName, `actively serving at port: ${HeckPort}`)
+})
+
 const router: Router = new Router();
 registerAll(router);
+router.param
 
 HeckApp.use(LogMiddleware(LogConsole));
 HeckApp.use(router.routes());
 HeckApp.use(router.allowedMethods());
+
+await HeckApp.listen({ port: HeckPort });
 
 /*
 HeckApp.use(async (ctx, next) => {
@@ -26,8 +33,3 @@ HeckApp.use(async (ctx, next) => {
 });
 */
 
-HeckApp.addEventListener('listen', () => {
-    console.log(`${HeckName} is now running at port: ${HeckPort}`)
-})
-
-await HeckApp.listen({ port: HeckPort });

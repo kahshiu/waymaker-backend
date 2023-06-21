@@ -3,6 +3,7 @@ import { EntityIndividual } from "../config/dbModels/EntityIndividual.ts";
 import { CompanyDto } from "../config/dbModels/dtos/entity/CompanyDto.ts";
 import { IndividualDto } from "../config/dbModels/dtos/entity/IndividualDto.ts";
 import { pgPool } from "../config/dbPool.ts";
+import { DebugDB } from "../middleware/logger/DebugDB.ts";
 import { QueryObject, SqlQuery } from "./interfaces/common.ts";
 
 type SqlIndividual = SqlQuery<IndividualDto, EntityIndividual, QueryObject<EntityIndividual>>
@@ -32,14 +33,17 @@ export class EntityRepository {
         const _filters = params.dto;
         const _client = client ?? await pgPool.connect() 
 
-        return _client.queryObject({
-            text: `
-                select ${_cols}
+        return new DebugDB(_client).queryObject(
+            "EntityRepo ",
+            {
+                text: `select 
+                    ${_cols} 
                 from entities 
-                where entity_id = ${_filters.entityId}
-            `,
-            fields: _cols,
-        })
+                where entity_id = ${_filters.entityId} 
+                and entity_type = ${_filters.entityType};`,
+                fields: _cols,
+            }
+        )
     }
 
     public selectIndividual: SqlIndividual = (params, client?) => {
