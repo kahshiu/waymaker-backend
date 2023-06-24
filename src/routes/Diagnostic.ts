@@ -7,7 +7,7 @@ export class Diagnostic implements IController {
     public baseRoute: (route: string) => string;
 
     constructor () {
-        this.baseRoute = routeChaining("/diagnostic");
+        this.baseRoute = routeChaining("/api/diagnostic");
     }
 
     registerRoutes (router: Router) {

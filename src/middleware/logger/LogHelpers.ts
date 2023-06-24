@@ -1,9 +1,9 @@
-import { QueryObject } from "../../repository/interfaces/common.ts";
+import { QueryObjectResult } from "pg/query/query.ts";
 import { LogAdapter } from "./LogAdapter.ts";
 
 export const LogConsole = new LogAdapter(console); 
 
-export const LogService = <T>(label: string, result: QueryObject<T>) => {
+export const LogService = <T>(label: string, result: QueryObjectResult<T>) => {
     LogConsole.debug(`${label} command: `, result.command);
     LogConsole.debug(`${label} text: `, result.query.text);
     LogConsole.debug(`${label} count: `, result.rowCount);

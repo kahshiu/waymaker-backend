@@ -1,23 +1,11 @@
 import { PoolClient, Transaction } from "pg/mod.ts";
-
-export interface QueryParams {
-    text: string; 
-    fields: string[]
-}
-export interface SqlQuery<IDtoVals, IEntVals, IResult> {
+import { QueryObjectResult } from "pg/query/query.ts";
+export interface SqlQuery<IEntVals> {
     (
         params: {
-            cols?: string[], 
-            dto: IDtoVals, // for insert, update, filters
+            ent: IEntVals, // for insert, update, filters
+            cols?: string[]
         }, 
         client?: PoolClient | Transaction
-    ): Promise<IResult>
-}
-export interface QueryObject<TObject> {
-    query: any;
-    command: string;
-    rowCount: number;
-    warnings: any[];
-    columns: string[];
-    rows: TObject[]
+    ): Promise<QueryObjectResult<IEntVals>>
 }

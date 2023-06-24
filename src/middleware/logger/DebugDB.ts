@@ -1,5 +1,5 @@
 import { PoolClient } from "pg/client.ts";
-import { QueryObject, QueryParams } from "../../repository/interfaces/common.ts";
+import { QueryArguments } from "pg/query/query.ts";
 import { LogService } from "./LogHelpers.ts";
 
 // NOTE: 
@@ -11,9 +11,9 @@ export class DebugDB {
         this.client = client;
     }
 
-    public queryObject = async <TObject>(label: string, queryParams: QueryParams) => {
-        const result = await this.client.queryObject<TObject>(queryParams);
-        LogService(label, result as QueryObject<TObject>);
+    public queryObject = async <TObject>(label: string, query: string, queryArgs?: QueryArguments) => {
+        const result = await this.client.queryObject<TObject>(query, queryArgs);
+        LogService(label, result);
         return result;
     }
 

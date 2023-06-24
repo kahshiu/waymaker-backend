@@ -33,6 +33,11 @@ insert into entities (entity_type, entity_name) values
 (1, 'Mr. Ben')
 
 select * from entities
+select 
+                 entity_id,entity_type,entity_name,contact_details,address_details,address_postcode,address_city,address_state 
+             from entities 
+             where entity_id = 1 
+             and entity_type = 1;
 
 
 SELECT * FROM pg_stat_activity where application_name = 'deno_postgres';

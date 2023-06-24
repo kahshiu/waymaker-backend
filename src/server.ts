@@ -12,7 +12,7 @@ HeckApp.addEventListener('listen', () => {
 
 const router: Router = new Router();
 registerAll(router);
-router.param
+// router.param
 
 HeckApp.use(LogMiddleware(LogConsole));
 HeckApp.use(router.routes());
@@ -20,12 +20,13 @@ HeckApp.use(router.allowedMethods());
 
 await HeckApp.listen({ port: HeckPort });
 
-/*
 HeckApp.use(async (ctx, next) => {
+  console.log("tracing error: ", ctx.request.secure, ctx.request.url, ctx.request.headers);
   ctx.response.body = "Hello World!";
   await next();
 });
 
+/*
 HeckApp.use(async (ctx, next) => {
   const x: ResponseBody = await ctx.response.body;
   ctx.response.body = x as string + "\n something here asdfads";

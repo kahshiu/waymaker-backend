@@ -1,13 +1,11 @@
+import { PoolClient } from "pg/mod.ts";
 import { EntityCompany } from "../config/dbModels/EntityCompany.ts";
 import { EntityIndividual } from "../config/dbModels/EntityIndividual.ts";
-import { CompanyDto } from "../config/dbModels/dtos/entity/CompanyDto.ts";
-import { IndividualDto } from "../config/dbModels/dtos/entity/IndividualDto.ts";
 import { pgPool } from "../config/dbPool.ts";
+import { SqlQuery } from "./interfaces/common.ts";
 import { DebugDB } from "../middleware/logger/DebugDB.ts";
-import { QueryObject, SqlQuery } from "./interfaces/common.ts";
 
-type SqlIndividual = SqlQuery<IndividualDto, EntityIndividual, QueryObject<EntityIndividual>>
-type SqlCompany = SqlQuery<CompanyDto, EntityCompany, QueryObject<EntityIndividual>>
+type SqlEntity = SqlQuery<EntityIndividual | EntityCompany>
 
 export class EntityRepository {
     public columnsMap = new Map();
@@ -28,29 +26,35 @@ export class EntityRepository {
         )
     }
 
-    private selectEntity = async (params, client?) => {
+    public selectEntity: SqlEntity = async (params, client?) => {
+        const _ent: EntityIndividual| EntityCompany = params.ent ?? {};
         const _cols = params.cols ?? this.columnsMap.get("ALL");
-        const _filters = params.dto;
-        const _client = client ?? await pgPool.connect() 
+        const _client = client ?? await pgPool.connect();
 
-        return new DebugDB(_client).queryObject(
+        return new DebugDB(_client as PoolClient).queryObject(
             "EntityRepo ",
-            {
-                text: `select 
-                    ${_cols} 
-                from entities 
-                where entity_id = ${_filters.entityId} 
-                and entity_type = ${_filters.entityType};`,
-                fields: _cols,
-            }
+            `select 
+                ${_cols} 
+            from entities 
+            where entity_id = ${_ent.entity_id} 
+            and entity_type = ${_ent.entity_type};`
         )
     }
 
-    public selectIndividual: SqlIndividual = (params, client?) => {
-        return this.selectEntity(params, client);
-    }
-    public selectCompany: SqlCompany = (params, client?) => { 
-        return this.selectEntity(params, client);
+    public patchEntity: SqlEntity = async (params, client?) => {
+        const _ent: EntityIndividual| EntityCompany = params.ent ?? {};
+        const _cols = params.cols ?? this.columnsMap.get("ALL");
+        const _client = client ?? await pgPool.connect() 
+
+        return new DebugDB(_client as PoolClient).queryObject(
+            "EntityRepo ",
+            `update entities set 
+                entity_name = '${_ent.entity_name}'
+            where entity_id = ${_ent.entity_id} 
+            and entity_type = ${_ent.entity_type}
+            returning ${_cols}
+            ;`
+        )
     }
 }
 
