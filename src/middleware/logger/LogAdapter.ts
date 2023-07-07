@@ -12,7 +12,7 @@ export class LogAdapter {
   }
 
   debug(title: string, message?: any) {
-    if(ENV === "development") {
+    if (ENV === "development") {
       this.logger.debug(title, message);
     }
   }
@@ -20,7 +20,7 @@ export class LogAdapter {
   warn(title: string, message?: any) {
     const isValidArray = Array.isArray(message) && message.length > 0;
     const isValidObj = message && Object.keys(message).length > 0;
-    if(isValidArray || isValidObj) {
+    if (isValidArray || isValidObj) {
       this.logger.warn(title, message);
     }
   }
