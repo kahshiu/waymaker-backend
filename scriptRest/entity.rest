@@ -21,7 +21,7 @@ GET http://localhost:8080/
 GET http://localhost/api/diagnostic/version
 
 #####
-GET http://localhost:8020/individual/1
+GET http://localhost:8020/api/individual/1
 
 #####
 

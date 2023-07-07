@@ -7,43 +7,36 @@ import {
 } from "../config/dbModels/EntityDto.ts";
 import { LogConsole } from "../middleware/logger/LogHelpers.ts";
 
-export class EntityService {
-  // private entityRepository: EntityRepository;
-  public serviceName = "EntityService";
+const serviceName = (method: string) => `EntityService::${method}`;
 
-  constructor() {
-    // this.entityRepository = new EntityRepository();
+export const getEntity = async (entityId: number, entityType: EntityType) => {
+  const label = serviceName("getEntity");
+
+  const dto = createEntityDto();
+  dto.entityId = entityId;
+  dto.entityType = entityType;
+
+  const client = await pgPool.connect();
+
+  try {
+    const { rows } = await selectEntity({ dto }, client);
+    const result = rows.map((entity) => entityDtoFromModel(entity));
+    return result;
+  } catch (e) {
+    LogConsole.error(label, e);
+  } finally {
+    client.release();
   }
+};
 
-  // NOTE: database errors logged here
-  async getEntity(entityId: number, entityType: EntityType) {
-    const methodName = "getEntity";
-    const label = `${this.serviceName}.${methodName}`;
+export const getIndividual = async (entityId: number) => {
+  return await getEntity(entityId, EntityType.INDIVIDUAL);
+};
+export const getCompany = async (entityId: number) => {
+  return await getEntity(entityId, EntityType.COMPANY);
+};
 
-    const dto = createEntityDto();
-    dto.entityId = entityId;
-    dto.entityType = entityType;
-
-    const client = await pgPool.connect();
-
-    try {
-      const { rows } = await selectEntity({ dto }, client);
-      const result = rows.map((entity) => entityDtoFromModel(entity));
-      return result;
-    } catch (e) {
-      LogConsole.error(label, e);
-    } finally {
-      client.release();
-    }
-  }
-  getIndividual(entityId: number) {
-    return this.getEntity(entityId, EntityType.INDIVIDUAL);
-  }
-  getCompany(entityId: number) {
-    return this.getEntity(entityId, EntityType.COMPANY);
-  }
-
-  /*
+/*
 
     async patchEntity (dto: IndividualDto | CompanyDto) {
         const methodName = "patchEntity";
@@ -61,4 +54,3 @@ export class EntityService {
         }
     }
     */
-}
