@@ -1,62 +1,68 @@
-import { PoolClient } from "pg/mod.ts";
-import { EntityCompany } from "../config/dbModels/EntityCompany.ts";
-import { EntityIndividual } from "../config/dbModels/EntityIndividual.ts";
-import { pgPool } from "../config/dbPool.ts";
-import { SqlQuery } from "./interfaces/common.ts";
-import { DebugDB } from "../middleware/logger/DebugDB.ts";
+import {
+  IEntityDto,
+  IEntityModel,
+} from "../config/dbModels/interfaces/Entity.ts";
+import { query } from "../config/util/LogClient.ts";
+import { SqlQuery } from "./interfaces/sql.ts";
 
-type SqlEntity = SqlQuery<EntityIndividual | EntityCompany>
+export const selectEntity: SqlQuery<IEntityDto, IEntityModel> = async (
+  params,
+  client
+) => {
+  const dto: IEntityDto = params.dto;
+  const label = "Entity: Select";
+  const sql = `select 
+      entity_id,
+      entity_type,
+      entity_name,
+      entity_ic_details,
+      contact_details,
+      address_details,
+      address_postcode,
+      address_city,
+      address_state,
+      note
+    from entities 
+      where entity_id = $entityId 
+      and entity_type = $entityType;`;
 
-export class EntityRepository {
-    public columnsMap = new Map();
+  return await query(client, label, sql, { ...dto });
+};
 
-    constructor () {
-        this.columnsMap.set(
-            "ALL", 
-            [
-                "entity_id",
-                "entity_type",
-                "entity_name",
-                "contact_details",
-                "address_details",
-                "address_postcode",
-                "address_city",
-                "address_state",
-            ]
-        )
-    }
+/*
+    text: "select 
+      entity_id,
+      entity_type,
+      entity_name,
+      entity_ic_details,
+      contact_details,
+      address_details,
+      address_postcode,
+      address_city,
+      address_state,
+      note
+    from entities 
+      where entity_id = $entity_id 
+      and entity_type = $entity_type;",
+      */
 
-    public selectEntity: SqlEntity = async (params, client?) => {
-        const _ent: EntityIndividual| EntityCompany = params.ent ?? {};
-        const _cols = params.cols ?? this.columnsMap.get("ALL");
-        const _client = client ?? await pgPool.connect();
+/*
+  public patchEntity: SqlEntity = async (params, client?) => {
+    const _ent: EntityIndividual | EntityCompany = params.ent ?? {};
+    const _cols = params.cols ?? this.columnsMap.get("ALL");
+    const _client = client ?? (await pgPool.connect());
 
-        return new DebugDB(_client as PoolClient).queryObject(
-            "EntityRepo ",
-            `select 
-                ${_cols} 
-            from entities 
-            where entity_id = ${_ent.entity_id} 
-            and entity_type = ${_ent.entity_type};`
-        )
-    }
-
-    public patchEntity: SqlEntity = async (params, client?) => {
-        const _ent: EntityIndividual| EntityCompany = params.ent ?? {};
-        const _cols = params.cols ?? this.columnsMap.get("ALL");
-        const _client = client ?? await pgPool.connect() 
-
-        return new DebugDB(_client as PoolClient).queryObject(
-            "EntityRepo ",
-            `update entities set 
-                entity_name = '${_ent.entity_name}'
-            where entity_id = ${_ent.entity_id} 
-            and entity_type = ${_ent.entity_type}
-            returning ${_cols}
-            ;`
-        )
-    }
-}
+    return new DebugDB(_client as PoolClient).queryObject(
+      "EntityRepo",
+      `update entities set 
+        entity_name = '${_ent.entity_name}'
+      where entity_id = ${_ent.entity_id} 
+      and entity_type = ${_ent.entity_type}
+      returning ${_cols}
+      ;`
+    );
+  };
+  */
 
 /*
 const selectRelation = async (params: any, client?: PoolClient | Transaction) => {
@@ -76,10 +82,10 @@ const selectRelation = async (params: any, client?: PoolClient | Transaction) =>
   ctx.response.body = {data}
 
 */
-  // const transaction1 = client.createTransaction("trx1", {});
-  // await transaction1.begin();
-  // const data = await getEntity({filters:{entityId: 1}}, transaction1);
-  // await transaction1.commit();
-  // const arrayObject = await client.queryObject("select version();");
+// const transaction1 = client.createTransaction("trx1", {});
+// await transaction1.begin();
+// const data = await getEntity({filters:{entityId: 1}}, transaction1);
+// await transaction1.commit();
+// const arrayObject = await client.queryObject("select version();");
 
-  //TODO: logger 
+//TODO: logger

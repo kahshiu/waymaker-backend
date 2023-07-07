@@ -1,41 +1,49 @@
-import { EntityCompany } from "../config/dbModels/EntityCompany.ts";
-import { EntityIndividual } from "../config/dbModels/EntityIndividual.ts";
-import { CompanyDto } from "../config/dbModels/dtos/entity/CompanyDto.ts";
-import { IndividualDto } from "../config/dbModels/dtos/entity/IndividualDto.ts";
-import { EntityType } from "../config/dbModels/enums/EntityType.ts";
+import { EntityType } from "../config/dbModels/enums.ts";
+import { selectEntity } from "../repository/EntityRepository.ts";
+import { pgPool } from "../config/dbPool.ts";
+import {
+  createEntityDto,
+  entityDtoFromModel,
+} from "../config/dbModels/EntityDto.ts";
 import { LogConsole } from "../middleware/logger/LogHelpers.ts";
-import { EntityRepository } from "../repository/EntityRepository.ts";
 
 export class EntityService {
-    private entityRepository: EntityRepository;
-    public serviceName = "EntityService";
+  // private entityRepository: EntityRepository;
+  public serviceName = "EntityService";
 
-    constructor () {
-        this.entityRepository = new EntityRepository();
+  constructor() {
+    // this.entityRepository = new EntityRepository();
+  }
+
+  // NOTE: database errors logged here
+  async getEntity(entityId: number, entityType: EntityType) {
+    const methodName = "getEntity";
+    const label = `${this.serviceName}.${methodName}`;
+
+    const dto = createEntityDto();
+    dto.entityId = entityId;
+    dto.entityType = entityType;
+
+    const client = await pgPool.connect();
+
+    try {
+      const { rows } = await selectEntity({ dto }, client);
+      const result = rows.map((entity) => entityDtoFromModel(entity));
+      return result;
+    } catch (e) {
+      LogConsole.error(label, e);
+    } finally {
+      client.release();
     }
+  }
+  getIndividual(entityId: number) {
+    return this.getEntity(entityId, EntityType.INDIVIDUAL);
+  }
+  getCompany(entityId: number) {
+    return this.getEntity(entityId, EntityType.COMPANY);
+  }
 
-    // NOTE: database errors logged here
-    async getEntity (entityId: number, entityType: EntityType) {
-        const methodName = "getEntity";
-        const label = `${this.serviceName}.${methodName}`;
-
-        const ent = entityType === EntityType.COMPANY? 
-            new EntityCompany(): 
-            new EntityIndividual();
-
-        ent.entity_id = entityId;
-        const params = { ent };
-
-        try {
-            const result = await this.entityRepository.selectEntity(params);
-            return result?.rows ?? [];
-
-        } catch (e) {
-            LogConsole.error(label, e);
-        }
-    }
-    getIndividual(entityId: number) { return this.getEntity(entityId, EntityType.INDIVIDUAL)} 
-    getCompany(entityId: number) { return this.getEntity(entityId, EntityType.COMPANY)} 
+  /*
 
     async patchEntity (dto: IndividualDto | CompanyDto) {
         const methodName = "patchEntity";
@@ -52,4 +60,5 @@ export class EntityService {
             LogConsole.error(label, e);
         }
     }
+    */
 }
