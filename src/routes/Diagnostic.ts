@@ -1,25 +1,18 @@
+import { Context } from "oak/context.ts";
 import { Router } from "oak/router.ts";
-import { IController } from "./interfaces/IController.ts";
 import { VERSION } from "../config/env.ts";
-import { routeChaining } from "../helpers/string.ts";
 
-export class Diagnostic implements IController {
-    public baseRoute: (route: string) => string;
+const withBasePath = (path: string) => `/api/diagnostic/${path}`;
 
-    constructor () {
-        this.baseRoute = routeChaining("/api/diagnostic");
-    }
+export const routeDiagnostic = (router: Router) => {
+  router.get(withBasePath("/testing"), testingRoute);
+  router.get(withBasePath("/version"), versionRoute);
+};
 
-    registerRoutes (router: Router) {
-        router.get(this.baseRoute("/testing"), this.testing);
-        router.get(this.baseRoute("/version"), this.version);
-    }
+export const testingRoute = (ctx: Context) => {
+  ctx.response.body = { greeting: "hello world from my-backend" };
+};
 
-    testing (ctx) {
-        ctx.response.body = { greeting: "hello world from my-backend" }
-    }
-
-    version (ctx) {
-        ctx.response.body = { VERSION };
-    }
-}
+export const versionRoute = (ctx: Context) => {
+  ctx.response.body = { VERSION };
+};
