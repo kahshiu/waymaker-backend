@@ -34,3 +34,8 @@ export const dtoDefaultId = (value: any) => {
     ])
   );
 };
+
+export const extractNumbers = (value: any) => {
+  if (value === null) return value;
+  return value.replace(/[^0-9]/g, "");
+};

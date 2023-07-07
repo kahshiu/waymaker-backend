@@ -1,35 +1,22 @@
 #### 
-# send request via direct port mapping
 GET http://localhost:8020/api/diagnostic/version
-#### 
-GET http://localhost:80/
-
-#### 
-GET http://localhost:80/api/diagnostic/version
-
-#### 
-GET http://localhost:80/app
-
-#### 
-GET http://localhost:8080/hello/asdf
-#### 
-GET http://localhost:3000/
-GET http://localhost:8080/
-
-#### 
-# send request via proxy direct port mapping
-GET http://localhost/api/diagnostic/version
 
 #####
 GET http://localhost:8020/api/individual/1
 
 #####
+PATCH http://localhost:8020/api/individual
+Content-Type: "application/json" 
 
-GET http://localhost:8000/individual/2
+{
+    "entityId": 1,
+    "entityType": 1,
+    "entityName": "mr. beanie",
+    "note": "something here"
+}
 
 #####
-
-PATCH http://localhost:8000/individual/2
+GET http://localhost:8020/api/definitions/states
 Content-Type: "application/json" 
 
 {

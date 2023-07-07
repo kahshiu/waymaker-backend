@@ -2,6 +2,7 @@ import {
   dtoDefaultId,
   dtoDefaultNum,
   dtoDefaultString,
+  extractNumbers,
 } from "../util/defaults.ts";
 import { IEntityDto, IEntityModel } from "./interfaces/Entity.ts";
 import {
@@ -77,10 +78,10 @@ export const entityDtoFromPayload: fnDtoFromPayload<IEntityDto> = (payload) => {
   dto.entityType = dtoDefaultNum(payload.entityType);
   dto.entityName = payload.entityName ?? "";
   dto.entityIcType = dtoDefaultNum(payload.entityIcType);
-  dto.entityIc = dtoDefaultString(payload.entityIcType);
+  dto.entityIc = extractNumbers(dtoDefaultString(payload.entityIc));
 
-  dto.mobileNo = dtoDefaultString(payload.mobileNo);
-  dto.officeNo = dtoDefaultString(payload.officeNo);
+  dto.mobileNo = extractNumbers(dtoDefaultString(payload.mobileNo));
+  dto.officeNo = extractNumbers(dtoDefaultString(payload.officeNo));
   dto.email = dtoDefaultString(payload.email);
 
   dto.address1 = dtoDefaultString(payload.address1);
@@ -127,6 +128,8 @@ export const entityDtoFromModel: fnDtoFromModel<IEntityDto, IEntityModel> = (
   dto.entityId = model.entity_id;
   dto.entityType = model.entity_type;
   dto.entityName = model.entity_name;
+  dto.entityIcType = dtoDefaultString(model.entity_ic_details?.ic_type);
+  dto.entityIc = dtoDefaultString(model.entity_ic_details?.ic_no);
 
   dto.mobileNo = dtoDefaultString(model.contact_details?.mobile_no);
   dto.officeNo = dtoDefaultString(model.contact_details?.office_no);

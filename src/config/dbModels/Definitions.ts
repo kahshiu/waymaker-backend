@@ -1,0 +1,18 @@
+export const MYStates = [
+  { num: 1, short: "JHR", long: "Johor" },
+  { num: 2, short: "KDH", long: "Kedah" },
+  { num: 3, short: "KTN", long: "Kelantan" },
+  { num: 4, short: "MLK", long: "Malacca" },
+  { num: 5, short: "NSN", long: "Negeri Sembilan" },
+  { num: 6, short: "PHG", long: "Pahang" },
+  { num: 7, short: "PNG", long: "Penang" },
+  { num: 8, short: "PRK", long: "Perak" },
+  { num: 9, short: "PLS", long: "Perlis" },
+  { num: 10, short: "SBH", long: "Sabah" },
+  { num: 11, short: "SWK", long: "Sarawak" },
+  { num: 12, short: "SGR", long: "Selangor" },
+  { num: 13, short: "TRG", long: "Terengganu" },
+  { num: 20, short: "KUL", long: "Kuala Lumpur" },
+  { num: 21, short: "LBN", long: "Labuan" },
+  { num: 22, short: "PJY", long: "Putrajaya" },
+];
