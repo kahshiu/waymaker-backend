@@ -87,7 +87,7 @@ export const entityDtoFromPayload: fnDtoFromPayload<IEntityDto> = (payload) => {
   dto.address1 = dtoDefaultString(payload.address1);
   dto.address2 = dtoDefaultString(payload.address2);
   dto.address3 = dtoDefaultString(payload.address3);
-  dto.addressPostcode = dtoDefaultString(payload.addressPostCode);
+  dto.addressPostcode = dtoDefaultString(payload.addressPostcode);
   dto.addressCity = dtoDefaultString(payload.addressCity);
   dto.addressState = dtoDefaultNum(payload.addressState);
   dto.note = dtoDefaultString(payload.note);

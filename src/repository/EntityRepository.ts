@@ -6,7 +6,7 @@ export const selectEntity: SqlQuery<IEntityModel> = async (params, client) => {
   const model: IEntityModel = params.model;
   const label = "Entity: Select";
   const sql = `select 
-      entity_id
+        entity_id
       , entity_type
       , entity_name
       , entity_ic_details
@@ -27,7 +27,7 @@ export const updateEntity: SqlQuery<IEntityModel> = async (params, client) => {
   const model: IEntityModel = params.model;
   const label = "Entity: Update";
   const sql = `update entities set
-    entity_name = $entity_name
+      entity_name = $entity_name
     , entity_ic_details = $entity_ic_details
     , contact_details = $contact_details
     , address_details = $address_details
@@ -36,8 +36,36 @@ export const updateEntity: SqlQuery<IEntityModel> = async (params, client) => {
     , address_state = $address_state
     , note = $note
     where entity_id = $entity_id 
-    and entity_type = $entity_type;`;
+    and entity_type = $entity_type
+    returning entity_id;`;
 
+  return await query(client, label, sql, { ...model });
+};
+
+export const createEntity: SqlQuery<IEntityModel> = async (params, client) => {
+  const model: IEntityModel = params.model;
+  const label = "Entity: Insert";
+  const sql = `insert into entities (
+      entity_name       
+    , entity_type
+    , entity_ic_details 
+    , contact_details   
+    , address_details   
+    , address_postcode  
+    , address_city      
+    , address_state     
+    , note              
+  ) values (
+      $entity_name
+    , $entity_type
+    , $entity_ic_details
+    , $contact_details
+    , $address_details
+    , $address_postcode
+    , $address_city
+    , $address_state
+    , $note
+  ) returning entity_id;`;
   return await query(client, label, sql, { ...model });
 };
 

@@ -1,5 +1,9 @@
 import { EntityType } from "../config/dbModels/enums.ts";
-import { selectEntity, updateEntity } from "../repository/EntityRepository.ts";
+import {
+  createEntity,
+  selectEntity,
+  updateEntity,
+} from "../repository/EntityRepository.ts";
 import { pgPool } from "../config/dbPool.ts";
 import {
   createEntityModel,
@@ -30,14 +34,37 @@ export const getEntity = async (entityId: number, entityType: EntityType) => {
 };
 
 export const patchEntity = async (dto: IEntityDto) => {
-  const label = serviceName("getEntity");
+  const label = serviceName("patchEntity");
   const model = entityDtoToModel(dto);
-  console.log("model: ", dto, model);
+
+  LogConsole.debug("debug: patchEntity, dto", dto);
+  LogConsole.debug("debug: patchEntity, model", model);
 
   const client = await pgPool.connect();
   try {
-    await updateEntity({ model }, client);
-    return;
+    const { rows } = await updateEntity({ model }, client);
+    const result = rows.map((entity) => entityDtoFromModel(entity));
+    return result;
+  } catch (e) {
+    LogConsole.error(label, e);
+  } finally {
+    client.release();
+  }
+};
+
+export const putEntity = async (dto: IEntityDto) => {
+  const label = serviceName("putEntity");
+  const model = entityDtoToModel(dto);
+  LogConsole.debug("tracing putEntity, dto", dto);
+  LogConsole.debug("tracing putEntity, model", model);
+
+  const client = await pgPool.connect();
+  try {
+    const { rows } = await createEntity({ model }, client);
+    LogConsole.debug("tracing putEntity, rows", rows);
+
+    const result = rows.map((entity) => entityDtoFromModel(entity));
+    return result;
   } catch (e) {
     LogConsole.error(label, e);
   } finally {
@@ -51,22 +78,3 @@ export const getIndividual = async (entityId: number) => {
 export const getCompany = async (entityId: number) => {
   return await getEntity(entityId, EntityType.COMPANY);
 };
-
-/*
-
-    async patchEntity (dto: IndividualDto | CompanyDto) {
-        const methodName = "patchEntity";
-        const label = `${this.serviceName}.${methodName}`;
-        const ent = dto.entityType === EntityType.COMPANY? 
-            new EntityCompany(dto): 
-            new EntityIndividual(dto);
-
-        try {
-            const result = await this.entityRepository.patchEntity({ ent });
-            return result?.rows ?? [];
-
-        } catch (e) {
-            LogConsole.error(label, e);
-        }
-    }
-    */
