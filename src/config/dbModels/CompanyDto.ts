@@ -1,4 +1,4 @@
-import { EntityType, IcType } from "./enums.ts";
+import { EntityType, IcType } from "../dbEnums.ts";
 import {
   createEntityDto,
   entityDtoFromPayload,

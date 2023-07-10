@@ -1,4 +1,4 @@
-import { EntityType } from "../config/dbModels/enums.ts";
+import { EntityType } from "../config/dbEnums.ts";
 import {
   createEntity,
   selectEntity,
