@@ -5,8 +5,8 @@ import { VERSION } from "../config/env.ts";
 const withBasePath = (path: string) => `/api/diagnostic/${path}`;
 
 export const routeDiagnostic = (router: Router) => {
-  router.get(withBasePath("/testing"), testingRoute);
-  router.get(withBasePath("/version"), versionRoute);
+  router.get(withBasePath("testing"), testingRoute);
+  router.get(withBasePath("version"), versionRoute);
 };
 
 export const testingRoute = (ctx: Context) => {
