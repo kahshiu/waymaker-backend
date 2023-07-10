@@ -2,13 +2,45 @@ import googleapis from "npm:googleapis@120.0.0";
 import { LogConsole } from "../middleware/logger/LogHelpers.ts";
 import { readJson, writeJson } from "./json.ts";
 
-interface IToken {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
+interface ITokenEntity {
+  id_token: string | null;
+  access_token: string | null;
+  refresh_token: string | null;
+  expires_in: number | null;
+  token_type: string | null;
   scope: string;
-  id_token: string;
 }
+
+interface ITokenDto {
+  idToken: string | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  expiresIn: number | null;
+  tokenType: string | null;
+  scope: string;
+}
+
+export const tokenDtoFromEntity = (payload: Partial<ITokenEntity>) => {
+  return <ITokenDto>{
+    idToken: payload?.id_token ?? null,
+    accessToken: payload?.access_token ?? null,
+    refreshToken: payload?.refresh_token ?? null,
+    expiresIn: payload?.expires_in ?? null,
+    tokenType: payload?.token_type ?? null,
+    scope: payload?.scope ?? "",
+  };
+};
+
+export const tokenDtoToEntity = (dto: Partial<ITokenDto>) => {
+  return <ITokenEntity>{
+    id_token: dto?.idToken ?? null,
+    access_token: dto?.accessToken ?? null,
+    refresh_token: dto?.refreshToken ?? null,
+    expires_in: dto?.expiresIn ?? null,
+    token_type: dto?.tokenType ?? null,
+    scope: dto?.scope ?? null,
+  };
+};
 
 export const getGoogleConfig = async (path?: string) => {
   const defaultPath = path ?? "google_client_config.json";
@@ -38,14 +70,7 @@ export const writeGoogleCredsRaw = async (code: string, path?: string) => {
     grant_type: "authorization_code",
   };
 
-  let tokens = {
-    idToken: null,
-    accessToken: null,
-    refreshToken: null,
-    expiresIn: null,
-    tokenType: null,
-    scope: "",
-  };
+  let tokens = tokenDtoFromEntity({});
 
   try {
     LogConsole.debug("tracing writeGoogleCredsRaw, start flag");
@@ -58,13 +83,7 @@ export const writeGoogleCredsRaw = async (code: string, path?: string) => {
     });
     const json = await respToken.json();
     LogConsole.debug("tracing writeGoogleCredsRaw, end flag. Tokens: ", json);
-
-    tokens.idToken = json.id_token;
-    tokens.accessToken = json.access_token;
-    tokens.refreshToken = json.refresh_token;
-    tokens.expiresIn = json.expires_in;
-    tokens.tokenType = json.token_type;
-    tokens.scope = json.scope;
+    tokens = tokenDtoFromEntity(json);
 
     await writeJson("google_creds.json", tokens);
   } catch (error) {
@@ -113,20 +132,16 @@ export const refreshGoogleCredsRaw = async () => {
     });
     const jsonCredsNew = await respRefresh.json();
     const jsonCreds = {
-      idToken: jsonCredsNew.id_token ?? jsonCredsOld.idToken,
-      accessToken: jsonCredsNew.access_token ?? jsonCredsOld.accessToken,
-      refreshToken: jsonCredsNew.refresh_token ?? jsonCredsOld.refreshToken,
-      expiresIn: jsonCredsNew.expires_in ?? jsonCredsOld.expiresIn,
-      tokenType: jsonCredsNew.token_type ?? jsonCredsOld.tokenType,
-      scope: jsonCredsNew.scope ?? jsonCredsOld.scope,
+      ...jsonCredsOld,
+      ...tokenDtoFromEntity(jsonCredsNew),
     };
 
     await writeJson("google_creds.json", jsonCreds);
 
     // TODO: check returned jsonRefreshed by http status
     LogConsole.debug("tracing refreshOAuth, result:", {
-      old: jsonCredsOld.accessToken,
-      new: jsonCreds,
+      old: jsonCredsOld,
+      new: tokenDtoFromEntity(jsonCredsNew),
     });
   } catch (error) {
     LogConsole.error("tracing refreshOAuth,  error:", error);

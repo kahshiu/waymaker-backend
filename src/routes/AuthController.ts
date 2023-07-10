@@ -2,8 +2,8 @@ import { Context, Next, Router } from "oak/mod.ts";
 import { HTTP } from "../helpers/HTTP.ts";
 import { HTTPPayload } from "../helpers/HTTPPayload.ts";
 // // @deno-types="npm:@types/nodemailer@6.4.8"
-import nodemailer from "npm:nodemailer@6.9.3";
-// import MailComposer from "npm:nodemailer@6.9.3/lib/mail-composer";
+import nodemailer from "nodemailer";
+import MailComposer from "mailcomposer";
 
 import googleapis, { google } from "npm:googleapis@120.0.0";
 import { LogConsole } from "../middleware/logger/LogHelpers.ts";
@@ -11,18 +11,20 @@ import { readJson, writeJson } from "../helpers/json.ts";
 import {
   getGoogleConfig,
   refreshGoogleCredsRaw,
+  tokenDtoToEntity,
   writeGoogleCredsRaw,
 } from "../helpers/authGoogle.ts";
 import * as _ from "lodash";
 
-import { Buffer } from "https://deno.land/std/io/buffer.ts";
+import { encode, decode } from "https://deno.land/std/encoding/base64url.ts";
 
 const withBasePath = (path: string) => `/auth/${path}`;
 
 export const routeOAuth = (router: Router) => {
   router.get(withBasePath("google/register"), registerOAuth);
   router.get(withBasePath("google/refresh"), refreshOAuth);
-  router.get(withBasePath("mail/send"), sendMail);
+  router.get(withBasePath("google/verify"), verifyIdToken);
+  router.get(withBasePath("mail/send"), sendMail2);
   router.get(withBasePath("userDetails"), getUserDetails);
 };
 
@@ -96,20 +98,22 @@ const getGmailService = async () => {
   );
 
   const json = await readJson("google_creds.json");
-  oAuth2Client.setCredentials(json);
+  oAuth2Client.setCredentials(tokenDtoToEntity(json));
   const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
   return gmail;
 };
 
 const encodeMessage = (message: any) => {
+  return encode(message);
+  /*
   return new Buffer(message)
     .toString()
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
+    */
 };
 
-/*
 const createMail = async (options: any) => {
   const mailComposer = new MailComposer(options);
   const message = await mailComposer.compile().build();
@@ -118,35 +122,89 @@ const createMail = async (options: any) => {
 
 const sendGMail = async (options: any) => {
   const gmail = await getGmailService();
+  console.log("tracing sendGmail: ", "got the mail service");
   const rawMessage = await createMail(options);
-  // const { data: { id } = {} } = await gmail.users.messages.send({
-  //   userId: "me",
-  //   resource: {
-  //     raw: rawMessage,
-  //   },
-  // });
-  // return id;
-  return 123;
-};
-*/
-
-const options = {
-  to: "kahshiu@gmail.com",
-  cc: "kahshiu@gmail.com",
-  // replyTo: 'amit@labnol.org',
-  subject: "Hello Amit 🚀",
-  text: "This email is sent from the command line",
-  html: `<p>🙋🏻‍♀️  &mdash; This is a <b>test email</b> from <a href="https://digitalinspiration.com">Digital Inspiration</a>.</p>`,
-  textEncoding: "base64",
-  headers: [
-    { key: "X-Application-Developer", value: "Amit Agarwal" },
-    { key: "X-Application-Version", value: "v1.0.0.2" },
-  ],
+  console.log("tracing sendGmail: ", "created mail");
+  const { data: { id } = {} } = await gmail.users.messages.send({
+    userId: "me",
+    requestBody: {
+      raw: rawMessage,
+    },
+  });
+  console.log("tracing sendGmail: ", "sent mail");
+  return id;
 };
 
 export const sendMail = async (ctx: Context, next: Next) => {
+  const options = {
+    to: "kahshiu@gmail.com",
+    cc: "kahshiu@gmail.com",
+    // replyTo: 'amit@labnol.org',
+    subject: "Hello Amit",
+    text: "This email is sent from the command line",
+    html: `<p>This is a <b>test email</b> from <a href="https://digitalinspiration.com">Digital Inspiration</a>.</p>`,
+    textEncoding: "base64",
+    headers: [
+      { key: "X-Application-Developer", value: "Amit Agarwal" },
+      { key: "X-Application-Version", value: "v1.0.0.2" },
+    ],
+  };
+
   const messageId = await sendGMail(options);
+  console.log(messageId);
 };
+
+export const verifyIdToken = async (ctx: Context, next: Next) => {
+  const json = await readJson("google_client_config.json");
+  const json2 = await readJson("google_creds.json");
+  const clientId = json.web.client_id;
+  const clientSecret = json.web.client_secret;
+  const redirectUri = json.web.redirect_uris;
+  const oAuth2Client = new google.auth.OAuth2(
+    clientId,
+    clientSecret,
+    redirectUri
+  );
+  // const x = tokenDtoToEntity(json2);
+  console.log(json2.accessToken);
+  let resp;
+  try {
+    resp = await oAuth2Client.getTokenInfo(json2.accessToken);
+    LogConsole.debug("tracing envelop, payload, ", resp);
+  } catch (error) {
+    console.log("tracing error", error);
+  }
+};
+export const sendMail2 = async (ctx: Context, next: Next) => {
+  /*
+  const json = await readJson("google_client_config.json");
+  const clientId = json.client_id;
+  const clientSecret = json.client_secret;
+  const redirectUri = json.redirect_uris[0];
+  const oAuth2Client = new google.auth.OAuth2(
+    clientId,
+    clientSecret,
+    redirectUri
+  );
+
+  oAuth2Client.verifyIdToken(idToken)
+
+
+  const transport = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: "",
+      clientId,
+      clientSecret,
+      refreshToken: REFRESH_TOKEN,
+      accessToken: accessToken,
+    },
+  });
+  */
+};
+/*
+ */
 
 /*
 const generateConfig = (url: any, accessToken: any) => {

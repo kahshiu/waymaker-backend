@@ -44,3 +44,9 @@ GET http://localhost:8020/auth/google/refresh
 
 #######
 GET http://localhost:8020/auth/userDetails
+
+#######
+GET http://localhost:8020/auth/google/verify
+
+#######
+GET http://localhost:8020/auth/mail/send

@@ -7,6 +7,8 @@
     "pg/": "https://deno.land/x/postgres@v0.17.0/",
     "oak/": "https://deno.land/x/oak@v12.5.0/",
     "cron/": "https://deno.land/x/croner@6.0.6/",
-    "lodash": "npm:lodash@4.17.19"
+    "lodash": "npm:lodash@4.17.19",
+    "nodemailer": "npm:nodemailer@6.9.3",
+    "mailcomposer": "npm:nodemailer@6.9.3/lib/mail-composer/index.js"
   }
 }
