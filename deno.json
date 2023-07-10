@@ -1,10 +1,12 @@
 {
   "tasks": {
-    "dev": "deno run --watch ./src/server.ts"
+    "dev": "deno run --watch --allow-net --allow-env --allow-sys --allow-read --allow-write=./json --unsafely-ignore-certificate-errors ./src/server.ts"
   },
   "imports": {
     "pg": "https://deno.land/x/postgres@v0.17.0",
     "pg/": "https://deno.land/x/postgres@v0.17.0/",
-    "oak/": "https://deno.land/x/oak@v12.5.0/"
+    "oak/": "https://deno.land/x/oak@v12.5.0/",
+    "cron/": "https://deno.land/x/croner@6.0.6/",
+    "lodash": "npm:lodash@4.17.19"
   }
 }
