@@ -8,7 +8,11 @@ import nodemailer from "npm:nodemailer@6.9.3";
 import googleapis, { google } from "npm:googleapis@120.0.0";
 import { LogConsole } from "../middleware/logger/LogHelpers.ts";
 import { readJson, writeJson } from "../helpers/json.ts";
-import { getGoogleConfig, writeGoogleCredsRaw } from "../helpers/authGoogle.ts";
+import {
+  getGoogleConfig,
+  refreshGoogleCredsRaw,
+  writeGoogleCredsRaw,
+} from "../helpers/authGoogle.ts";
 import * as _ from "lodash";
 
 import { Buffer } from "https://deno.land/std/io/buffer.ts";
@@ -76,45 +80,11 @@ export const googleUserDetails = async (
 };
 
 export const refreshOAuth = async (ctx: Context, next: Next) => {
-  const { web: jsonConfig } = await readJson("google_client_config.json");
-  const jsonCredsOld = await readJson("google_creds.json");
-  const apiUri = "https://oauth2.googleapis.com/token";
+  await refreshGoogleCredsRaw();
 
-  const options = {
-    refresh_token: jsonCredsOld.refreshToken,
-    client_id: jsonConfig.client_id,
-    client_secret: jsonConfig.client_secret,
-    grant_type: "refresh_token",
-  };
-
-  try {
-    const respRefresh = await fetch(apiUri, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(options),
-    });
-    const jsonCredsNew = await respRefresh.json();
-    const jsonCreds = {
-      idToken: jsonCredsNew.id_token ?? jsonCredsOld.idToken,
-      accessToken: jsonCredsNew.access_token ?? jsonCredsOld.accessToken,
-      refreshToken: jsonCredsNew.refresh_token ?? jsonCredsOld.refreshToken,
-      expiresIn: jsonCredsNew.expires_in ?? jsonCredsOld.expiresIn,
-      tokenType: jsonCredsNew.token_type ?? jsonCredsOld.tokenType,
-      scope: jsonCredsNew.scope ?? jsonCredsOld.scope,
-    };
-
-    await writeJson("google_creds.json", jsonCreds);
-
-    // TODO: check returned jsonRefreshed by http status
-    LogConsole.debug("tracing refreshOAuth, result:", {
-      old: jsonCredsOld.accessToken,
-      new: jsonCreds,
-    });
-  } catch (error) {
-    LogConsole.error("tracing refreshOAuth,  error:", error);
-  }
+  const result = { action: "refreshed access_token" };
+  HTTP.OkResponse(ctx, { payload: HTTPPayload(result) });
+  await next();
 };
 
 const getGmailService = async () => {
