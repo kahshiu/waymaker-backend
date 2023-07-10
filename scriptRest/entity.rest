@@ -1,5 +1,14 @@
+@refreshToken = 1//0gHCK7pcprHbCCgYIARAAGBASNwF-L9IrKPd0jDDgPYixWkkc0LKu8GmteS_IfIm8dzVLkuBXJRKc0eJx6XjrzOWLrLAPMQnK0bs
+
+@idToken = eyJhbGciOiJSUzI1NiIsImtpZCI6IjkzNDFkZWRlZWUyZDE4NjliNjU3ZmE5MzAzMDAwODJmZTI2YjNkOTIiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiI3OTgwNTMzNjI2OTctcmM1YXRkYTFkcGpidnUxczlydDlvZXB0ZXJsdTgwdG4uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiI3OTgwNTMzNjI2OTctcmM1YXRkYTFkcGpidnUxczlydDlvZXB0ZXJsdTgwdG4uYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTc0MDk3NDY2NzI5NzQwODczODkiLCJlbWFpbCI6ImthaHNoaXVAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJMX3NsbWkwaHFHV3NpUlNDd21ocGhRIiwibmFtZSI6ImNob25nIGthaHNoaXUiLCJwaWN0dXJlIjoiaHR0cHM6Ly9saDMuZ29vZ2xldXNlcmNvbnRlbnQuY29tL2EvQUFjSFR0ZGhxTzRTd3pnaXRxY3pTQ2pOdG9jTDgtTHIyVWxJaHBlUHdZUDI1cHhRPXM5Ni1jIiwiZ2l2ZW5fbmFtZSI6ImNob25nIiwiZmFtaWx5X25hbWUiOiJrYWhzaGl1IiwibG9jYWxlIjoiZW4tR0IiLCJpYXQiOjE2ODg5NDgyNTEsImV4cCI6MTY4ODk1MTg1MX0.CPRzQXzuLD4IyV4RBX-DIXeMgdzTOWeLXa5_CHupuz8oxUysCv6z5TA-lal9XI4jnJ--azpSD5JsxKV8vX_tIWbAavOSenR1MU9CtaX5i1deB5u4FFNsWdY6RYIlTcZh0WNBy1m2wVTKQ8vRC1M5lAvH9r6Wrq3mqSoOov6sOz5Lr3jzU3jfK80lqjv7HDSB1IQ9qQ0RPregE3dUe5FsEsOkzy_d89m_Qif2wGJ5vhIqBI_qEgRkBqr9WYsDSWF4jbVdjxv-2V50ni7SY1Zx7yrDTCv7b3fsloZQHTAfyphRLezDpkUBvSl6rHEqklFRQsIbKmGNuML7wyWQk934Dg
+@accessToken = ya29.a0AbVbY6M2JV3MrdE0vfdMbShTWhBLZf9t3R1MZgjVgOm7gJjLPkKn86dBmTvmvaxUwJ5WaV7WjaVlqNxmXiMFCFgFnnwDqzD_w445QQehywVj-KZhdhXKVy4kZDygXupZAPFcX8Fm-WvRHiCZAOWnwCIQjf5maCgYKAdgSARESFQFWKvPl9XTjQox3p8lpKfigyGsQQA0163
+
+
 #### 
 GET http://localhost:8020/api/diagnostic/version
+
+#### 
+GET http://localhost:8020/api/diagnostic/testing
 
 #####
 GET http://localhost:8020/api/individual/1
@@ -17,8 +26,21 @@ Content-Type: "application/json"
 
 #####
 GET http://localhost:8020/api/definitions/states
-Content-Type: "application/json" 
 
-{
-    "entityName": "testing 123456"
-}
+####
+GET http://localhost:8020/cron/start
+
+####
+GET http://localhost:8020/cron/pause
+
+####
+GET http://localhost:8020/cron/resume
+
+#######
+GET http://localhost:8020/auth/google/register
+
+#######
+GET http://localhost:8020/auth/google/refresh
+
+#######
+GET http://localhost:8020/auth/userDetails
