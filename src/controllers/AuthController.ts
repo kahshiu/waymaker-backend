@@ -1,26 +1,24 @@
 import { Context, Next, Router } from "oak/mod.ts";
-import { HTTP } from "../helpers/HTTP.ts";
-import { HTTPPayload } from "../helpers/HTTPPayload.ts";
 // // @deno-types="npm:@types/nodemailer@6.4.8"
 import nodemailer from "nodemailer";
 import MailComposer from "mailcomposer";
 
 import googleapis, { google } from "npm:googleapis@120.0.0";
-import { LogConsole } from "../middleware/logger/LogHelpers.ts";
-import { readJson, writeJson } from "../helpers/json.ts";
-import {
-  getGoogleConfig,
-  refreshGoogleCredsRaw,
-  tokenDtoToEntity,
-  writeGoogleCredsRaw,
-} from "../helpers/authGoogle.ts";
-import * as _ from "lodash";
 
-import { encode, decode } from "https://deno.land/std/encoding/base64url.ts";
+import { encode, decode } from "$std/encoding/base64url.ts";
+import {
+  writeGoogleCredsRaw,
+  refreshGoogleCredsRaw,
+  getGoogleConfig,
+  tokenDtoToEntity,
+} from "#services/AuthGoogle.ts";
+import { readJson } from "../util/json.ts";
+import { consoleDebug, consoleError } from "../util/Console.ts";
+import { apiOk, customBody } from "../util/HTTP.ts";
 
 const withBasePath = (path: string) => `/auth/${path}`;
 
-export const routeOAuth = (router: Router) => {
+export const routeAuth = (router: Router) => {
   router.get(withBasePath("google/register"), registerOAuth);
   router.get(withBasePath("google/refresh"), refreshOAuth);
   router.get(withBasePath("google/verify"), verifyIdToken);
@@ -44,17 +42,17 @@ export const registerOAuth = async (ctx: Context, next: Next) => {
     }
   }
 
-  HTTP.OkResponse(ctx, { payload: HTTPPayload(result) });
+  apiOk(ctx, { body: customBody(result) });
   await next();
 };
 
 export const getUserDetails = async (ctx: Context, next: Next) => {
   const json = await readJson("google_creds.json");
   const userDetails = await googleUserDetails(json.idToken, json.accessToken);
-  LogConsole.debug("tracing getUserDetails, userDetails: ", userDetails);
+  consoleDebug("tracing getUserDetails, userDetails: ", userDetails);
 
   const result = userDetails;
-  HTTP.OkResponse(ctx, { payload: HTTPPayload(result) });
+  apiOk(ctx, { body: customBody(result) });
   await next();
 };
 
@@ -72,7 +70,7 @@ export const googleUserDetails = async (
     Authorization: "Bearer " + idToken,
   };
   const url = `${apiUri}?${qsObj.toString()}`;
-  LogConsole.debug("tracing googleUserDetails: ", url);
+  consoleDebug("tracing googleUserDetails: ", url);
 
   const resp = await fetch(url, {
     method: "GET",
@@ -85,7 +83,7 @@ export const refreshOAuth = async (ctx: Context, next: Next) => {
   await refreshGoogleCredsRaw();
 
   const result = { action: "refreshed access_token" };
-  HTTP.OkResponse(ctx, { payload: HTTPPayload(result) });
+  apiOk(ctx, { body: customBody(result) });
   await next();
 };
 
@@ -170,13 +168,13 @@ export const verifyIdToken = async (ctx: Context, next: Next) => {
   let resp;
   try {
     resp = await oAuth2Client.getTokenInfo(json2.accessToken);
-    LogConsole.debug("tracing envelop, payload, ", resp);
+    consoleDebug("tracing envelop, payload, ", resp);
   } catch (error) {
-    console.log("tracing error", error);
+    consoleError("tracing error", error);
   }
 };
+
 export const sendMail2 = async (ctx: Context, next: Next) => {
-  /*
   const json = await readJson("google_client_config.json");
   const clientId = json.client_id;
   const clientSecret = json.client_secret;
@@ -187,6 +185,7 @@ export const sendMail2 = async (ctx: Context, next: Next) => {
     redirectUri
   );
 
+  /*
   oAuth2Client.verifyIdToken(idToken)
 
 

@@ -1,6 +1,6 @@
-import googleapis from "npm:googleapis@120.0.0";
-import { LogConsole } from "../middleware/logger/LogHelpers.ts";
-import { readJson, writeJson } from "./json.ts";
+import googleapis from "googleapis";
+import { consoleDebug, consoleError } from "#util/Console.ts";
+import { readJson, writeJson } from "#util/json.ts";
 
 interface ITokenEntity {
   id_token: string | null;
@@ -45,7 +45,7 @@ export const tokenDtoToEntity = (dto: Partial<ITokenDto>) => {
 export const getGoogleConfig = async (path?: string) => {
   const defaultPath = path ?? "google_client_config.json";
   const content = await readJson(defaultPath);
-  LogConsole.debug("tracing getGoogleConfig, content", content);
+  consoleDebug("tracing getGoogleConfig, content", content);
   const token = content.web;
   return {
     clientId: token.client_id,
@@ -73,7 +73,7 @@ export const writeGoogleCredsRaw = async (code: string, path?: string) => {
   let tokens = tokenDtoFromEntity({});
 
   try {
-    LogConsole.debug("tracing writeGoogleCredsRaw, start flag");
+    consoleDebug("tracing writeGoogleCredsRaw, start flag");
     const respToken = await fetch(apiUri, {
       method: "POST",
       headers: {
@@ -82,12 +82,12 @@ export const writeGoogleCredsRaw = async (code: string, path?: string) => {
       body: new URLSearchParams(options),
     });
     const json = await respToken.json();
-    LogConsole.debug("tracing writeGoogleCredsRaw, end flag. Tokens: ", json);
+    consoleDebug("tracing writeGoogleCredsRaw, end flag. Tokens: ", json);
     tokens = tokenDtoFromEntity(json);
 
     await writeJson("google_creds.json", tokens);
   } catch (error) {
-    LogConsole.debug("tracing writeGoogleCredsRaw, errors ", error);
+    consoleDebug("tracing writeGoogleCredsRaw, errors ", error);
   }
   return tokens;
 };
@@ -122,6 +122,8 @@ export const refreshGoogleCredsRaw = async () => {
     grant_type: "refresh_token",
   };
 
+  //TODO: need to do a general evaluation on variable conversions
+
   try {
     const respRefresh = await fetch(apiUri, {
       method: "POST",
@@ -130,20 +132,25 @@ export const refreshGoogleCredsRaw = async () => {
       },
       body: new URLSearchParams(options),
     });
-    const jsonCredsNew = await respRefresh.json();
+    const credEntity = await respRefresh.json();
+    const jsonCredsNew = tokenDtoFromEntity(credEntity);
     const jsonCreds = {
-      ...jsonCredsOld,
-      ...tokenDtoFromEntity(jsonCredsNew),
+      idToken: jsonCredsNew.idToken ?? jsonCredsOld.idToken,
+      accessToken: jsonCredsNew.accessToken ?? jsonCredsOld.accessToken,
+      refreshToken: jsonCredsNew.refreshToken ?? jsonCredsOld.refreshToken,
+      expiresIn: jsonCredsNew.expiresIn ?? jsonCredsOld.expiresIn,
+      tokenType: jsonCredsNew.tokenType ?? jsonCredsOld.tokenType,
+      scope: jsonCredsNew.scope ?? jsonCredsOld.scope,
     };
 
     await writeJson("google_creds.json", jsonCreds);
 
     // TODO: check returned jsonRefreshed by http status
-    LogConsole.debug("tracing refreshOAuth, result:", {
+    consoleDebug("tracing refreshOAuth, result:", {
       old: jsonCredsOld,
       new: tokenDtoFromEntity(jsonCredsNew),
     });
   } catch (error) {
-    LogConsole.error("tracing refreshOAuth,  error:", error);
+    consoleError("tracing refreshOAuth,  error:", error);
   }
 };

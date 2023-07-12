@@ -1,8 +1,8 @@
-import { IEntityModel } from "../config/dbModels/interfaces/Entity.ts";
-import { query } from "../config/util/LogClient.ts";
+import { logSql } from "#util/logger.ts";
+import { IEntityModel } from "../db/models/interfaces/Entity.ts";
 import { SqlQuery } from "./interfaces/sql.ts";
 
-export const selectEntity: SqlQuery<IEntityModel> = async (params, client) => {
+export const selectEntity: SqlQuery<IEntityModel> = async (client, params) => {
   const model: IEntityModel = params.model;
   const label = "Entity: Select";
   const sql = `select 
@@ -20,10 +20,10 @@ export const selectEntity: SqlQuery<IEntityModel> = async (params, client) => {
       where entity_id = $entity_id 
       and entity_type = $entity_type;`;
 
-  return await query(client, label, sql, { ...model });
+  return await logSql(client, label, sql, { ...model });
 };
 
-export const updateEntity: SqlQuery<IEntityModel> = async (params, client) => {
+export const updateEntity: SqlQuery<IEntityModel> = async (client, params) => {
   const model: IEntityModel = params.model;
   const label = "Entity: Update";
   const sql = `update entities set
@@ -39,10 +39,10 @@ export const updateEntity: SqlQuery<IEntityModel> = async (params, client) => {
     and entity_type = $entity_type
     returning entity_id;`;
 
-  return await query(client, label, sql, { ...model });
+  return await logSql(client, label, sql, { ...model });
 };
 
-export const createEntity: SqlQuery<IEntityModel> = async (params, client) => {
+export const createEntity: SqlQuery<IEntityModel> = async (client, params) => {
   const model: IEntityModel = params.model;
   const label = "Entity: Insert";
   const sql = `insert into entities (
@@ -66,7 +66,7 @@ export const createEntity: SqlQuery<IEntityModel> = async (params, client) => {
     , $address_state
     , $note
   ) returning entity_id;`;
-  return await query(client, label, sql, { ...model });
+  return await logSql(client, label, sql, { ...model });
 };
 
 /*

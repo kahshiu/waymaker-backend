@@ -3,7 +3,7 @@ import {
   dtoDefaultNum,
   dtoDefaultString,
   extractNumbers,
-} from "../util/defaults.ts";
+} from "../helpers/defaults.ts";
 import { IEntityDto, IEntityModel } from "./interfaces/Entity.ts";
 import {
   fnDtoCreate,
@@ -66,6 +66,7 @@ export const createEntityModel: fnModelCreate<IEntityModel> = () => {
 
 // TODO:
 // check what null in db turns into from db driver
+// Console log setup with tags
 
 // RULES:
 // 1. database null-values will retain in dto

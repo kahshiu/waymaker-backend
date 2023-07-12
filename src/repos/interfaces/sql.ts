@@ -4,9 +4,9 @@ import { QueryObjectResult } from "pg/query/query.ts";
 
 export interface SqlQuery<IModel> {
   (
+    client: PoolClient | Transaction,
     params: {
       model: IModel; // for insert, update, filters
-    },
-    client: PoolClient | Transaction
+    }
   ): Promise<QueryObjectResult<IModel>>;
 }

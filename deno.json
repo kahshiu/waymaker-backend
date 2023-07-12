@@ -3,12 +3,18 @@
     "dev": "deno run --watch --allow-net --allow-env --allow-sys --allow-read --allow-write=./json --unsafely-ignore-certificate-errors ./src/server.ts"
   },
   "imports": {
+    "$std/": "https://deno.land/std/",
+    "cron/": "https://deno.land/x/croner@6.0.6/",
     "pg": "https://deno.land/x/postgres@v0.17.0",
     "pg/": "https://deno.land/x/postgres@v0.17.0/",
     "oak/": "https://deno.land/x/oak@v12.5.0/",
-    "cron/": "https://deno.land/x/croner@6.0.6/",
-    "lodash": "npm:lodash@4.17.19",
+    "googleapis": "npm:googleapis@120.0.0",
     "nodemailer": "npm:nodemailer@6.9.3",
-    "mailcomposer": "npm:nodemailer@6.9.3/lib/mail-composer/index.js"
+    "mailcomposer": "npm:nodemailer@6.9.3/lib/mail-composer/index.js",
+    "#db/": "./src/db/",
+    "#controllers/": "./src/controllers/",
+    "#repos/": "./src/repos/",
+    "#services/": "./src/services/",
+    "#util/": "./src/util/"
   }
 }

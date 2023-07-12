@@ -1,80 +1,77 @@
-import { EntityType } from "../config/dbEnums.ts";
-import {
-  createEntity,
-  selectEntity,
-  updateEntity,
-} from "../repository/EntityRepository.ts";
-import { pgPool } from "../config/dbPool.ts";
+import { Client, PoolClient } from "pg/mod.ts";
+import { EntityType } from "#db/dbEnums.ts";
 import {
   createEntityModel,
   entityDtoFromModel,
   entityDtoToModel,
-} from "../config/dbModels/EntityDto.ts";
-import { LogConsole } from "../middleware/logger/LogHelpers.ts";
-import { IEntityDto } from "../config/dbModels/interfaces/Entity.ts";
+} from "#db/models/EntityDto.ts";
+import { IEntityDto } from "#db/models/interfaces/Entity.ts";
+import {
+  selectEntity,
+  updateEntity,
+  createEntity,
+} from "#repos/EntityRepository.ts";
+import { consoleError, consoleDebug } from "../util/Console.ts";
 
-const serviceName = (method: string) => `EntityService::${method}`;
-
-export const getEntity = async (entityId: number, entityType: EntityType) => {
-  const label = serviceName("getEntity");
+export const getEntity = async (
+  client: PoolClient,
+  entityId: number,
+  entityType: EntityType
+) => {
   const model = createEntityModel();
   model.entity_id = entityId;
   model.entity_type = entityType;
 
-  const client = await pgPool.connect();
   try {
-    const { rows } = await selectEntity({ model }, client);
+    const { rows } = await selectEntity(client, { model });
     const result = rows.map((entity) => entityDtoFromModel(entity));
+    consoleDebug("EntityService: getEntity, result: ", result);
     return result;
-  } catch (e) {
-    LogConsole.error(label, e);
+  } catch (error) {
+    consoleError("EntityService: getEntity, ", error);
   } finally {
     client.release();
   }
 };
 
-export const patchEntity = async (dto: IEntityDto) => {
-  const label = serviceName("patchEntity");
+export const patchEntity = async (client: PoolClient, dto: IEntityDto) => {
   const model = entityDtoToModel(dto);
+  consoleDebug("EntityService: patchEntity, dto", dto);
+  consoleDebug("EntityService: patchEntity, model", model);
 
-  LogConsole.debug("debug: patchEntity, dto", dto);
-  LogConsole.debug("debug: patchEntity, model", model);
-
-  const client = await pgPool.connect();
   try {
-    const { rows } = await updateEntity({ model }, client);
+    const { rows } = await updateEntity(client, { model });
     const result = rows.map((entity) => entityDtoFromModel(entity));
     return result;
-  } catch (e) {
-    LogConsole.error(label, e);
+  } catch (error) {
+    consoleError("EntityService: patchEntity, ", error);
   } finally {
     client.release();
   }
 };
 
-export const putEntity = async (dto: IEntityDto) => {
-  const label = serviceName("putEntity");
+export const putEntity = async (client: PoolClient, dto: IEntityDto) => {
   const model = entityDtoToModel(dto);
-  LogConsole.debug("tracing putEntity, dto", dto);
-  LogConsole.debug("tracing putEntity, model", model);
+  consoleDebug("EntityService: putEntity, dto", dto);
+  consoleDebug("EntityService: putEntity, model", model);
 
-  const client = await pgPool.connect();
   try {
-    const { rows } = await createEntity({ model }, client);
-    LogConsole.debug("tracing putEntity, rows", rows);
+    const { rows } = await createEntity(client, { model });
+    consoleDebug("EntityService: putEntity, rows", model);
 
     const result = rows.map((entity) => entityDtoFromModel(entity));
     return result;
-  } catch (e) {
-    LogConsole.error(label, e);
+  } catch (error) {
+    consoleError("EntityService: putEntity, ", error);
   } finally {
     client.release();
   }
 };
 
-export const getIndividual = async (entityId: number) => {
-  return await getEntity(entityId, EntityType.INDIVIDUAL);
+export const getIndividual = async (client: PoolClient, entityId: number) => {
+  return await getEntity(client, entityId, EntityType.INDIVIDUAL);
 };
-export const getCompany = async (entityId: number) => {
-  return await getEntity(entityId, EntityType.COMPANY);
+
+export const getCompany = async (client: PoolClient, entityId: number) => {
+  return await getEntity(client, entityId, EntityType.COMPANY);
 };

@@ -1,9 +1,10 @@
-import { jsonFolder } from "./global.ts";
+import { jsonFolder } from "./globals.ts";
 
 export const readJson = async (filePath: string) => {
   const jsonPath = jsonFolder(filePath);
   return JSON.parse(await Deno.readTextFile(jsonPath));
 };
+
 export const writeJson = async <TContent>(
   filePath: string,
   content: TContent
