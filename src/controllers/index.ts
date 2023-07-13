@@ -4,6 +4,7 @@ import { routeCron } from "./CronController.ts";
 import { routeDefinitions } from "./Definitions.ts";
 import { routeDiagnostic } from "./Diagnostic.ts";
 import { routeEntity } from "./EntityController.ts";
+import { routeMail } from "./MailController.ts";
 
 export const registerRoutes = (router: Router) => {
   routeAuth(router);
@@ -11,4 +12,5 @@ export const registerRoutes = (router: Router) => {
   routeDefinitions(router);
   routeDiagnostic(router);
   routeEntity(router);
+  routeMail(router);
 };

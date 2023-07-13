@@ -46,7 +46,7 @@ GET http://localhost:8020/auth/google/refresh
 GET http://localhost:8020/auth/google/userDetails
 
 #######
-GET http://localhost:8020/auth/mail/send
+GET http://localhost:8020/mail/send
 
 
 ##########################

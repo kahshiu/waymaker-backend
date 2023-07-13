@@ -1,9 +1,5 @@
 import { Context, Next, Router } from "oak/mod.ts";
-// // @deno-types="npm:@types/nodemailer@6.4.8"
-import nodemailer from "nodemailer";
-import MailComposer from "mailcomposer";
-import googleapis, { google } from "npm:googleapis@120.0.0";
-import { encode } from "$std/encoding/base64url.ts";
+import { google } from "npm:googleapis@120.0.0";
 import { consoleDebug, consoleError } from "#util/Console.ts";
 import { apiBad, apiInternalError, apiOk, customBody } from "#util/HTTP.ts";
 import { ITokenEntity } from "#db/models/interfaces/GoogleToken.ts";
@@ -14,10 +10,6 @@ import {
   refreshGoogleCreds,
   writeGoogleCreds,
 } from "../services/AuthGoogle.ts";
-import {
-  tokenDtoToEntity,
-  tokenDtoFromEntity,
-} from "../db/models/GoogleTokenDto.ts";
 import { apiUnauth } from "../util/HTTP.ts";
 
 const withBasePath = (path: string) => `/auth/${path}`;
@@ -27,7 +19,6 @@ export const routeAuth = (router: Router) => {
   router.get(withBasePath("google/refresh"), verifyAndRefreshToken);
   router.get(withBasePath("google/verify"), verifyIdToken);
   router.get(withBasePath("google/userDetails"), getUserDetails);
-  router.get(withBasePath("mail/send"), withGmailService, sendMail);
 };
 
 export const registerAuth = async (context: Context, next: Next) => {
@@ -169,71 +160,6 @@ export const getUserDetails = async (context: Context, next: Next) => {
 
   apiOk(context, { body: customBody({ userDetails }) });
   await next();
-};
-
-const withGmailService = async (context: Context, next: Next) => {
-  const config = await readGoogleConfig();
-  const creds = await readGoogleCreds();
-  if (config === null || creds === null) {
-    const noGmailService = customBody({ action: "No Gmail service" }, "BLANK");
-    apiBad(context, { body: noGmailService });
-    return;
-  }
-  const oAuth2Client = new google.auth.OAuth2(
-    config.clientId,
-    config.clientSecret,
-    config.redirectUris[0]
-  );
-
-  oAuth2Client.setCredentials(tokenDtoToEntity(creds));
-  context.state.gmailService = google.gmail({
-    version: "v1",
-    auth: oAuth2Client,
-  });
-  await next();
-};
-
-const createEncodedMail = async (options: any) => {
-  const mailComposer = new MailComposer(options);
-  const message = await mailComposer.compile().build();
-  return encode(message);
-};
-
-const sendGMail = async (
-  gmailService: googleapis.gmail_v1.Gmail,
-  options: any
-) => {
-  const rawMessage = await createEncodedMail(options);
-  consoleDebug("sendEmail, created mail", "");
-
-  const { data: { id } = {} } = await gmailService.users.messages.send({
-    userId: "me",
-    requestBody: {
-      raw: rawMessage,
-    },
-  });
-  consoleDebug("sendEmail, sent mail", "");
-  return id;
-};
-
-export const sendMail = async (context: Context, next: Next) => {
-  const gmailService = context.state.gmailService;
-  const options = {
-    to: "kahshiu@gmail.com",
-    cc: "kahshiu@gmail.com",
-    // replyTo: 'amit@labnol.org',
-    subject: "Hello Amit",
-    text: "This email is sent from the command line",
-    html: `<p>This is a <b>test email</b> from <a href="https://digitalinspiration.com">Digital Inspiration</a>.</p>`,
-    textEncoding: "base64",
-    headers: [
-      { key: "X-Application-Developer", value: "Amit Agarwal" },
-      { key: "X-Application-Version", value: "v1.0.0.2" },
-    ],
-  };
-
-  const messageId = await sendGMail(gmailService, options);
-  console.log(messageId);
 };
 
 /* TODO: retry sendMail using nodemailer
