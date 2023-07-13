@@ -2,138 +2,222 @@ import { Context, Next, Router } from "oak/mod.ts";
 // // @deno-types="npm:@types/nodemailer@6.4.8"
 import nodemailer from "nodemailer";
 import MailComposer from "mailcomposer";
-
 import googleapis, { google } from "npm:googleapis@120.0.0";
-
-import { encode, decode } from "$std/encoding/base64url.ts";
+import { encode } from "$std/encoding/base64url.ts";
+import { consoleDebug, consoleError } from "#util/Console.ts";
+import { apiBad, apiInternalError, apiOk, customBody } from "#util/HTTP.ts";
+import { ITokenEntity } from "#db/models/interfaces/GoogleToken.ts";
 import {
-  writeGoogleCredsRaw,
-  refreshGoogleCredsRaw,
-  getGoogleConfig,
+  googleUserDetails,
+  readGoogleConfig,
+  readGoogleCreds,
+  refreshGoogleCreds,
+  writeGoogleCreds,
+} from "../services/AuthGoogle.ts";
+import {
   tokenDtoToEntity,
-} from "#services/AuthGoogle.ts";
-import { readJson } from "../util/json.ts";
-import { consoleDebug, consoleError } from "../util/Console.ts";
-import { apiOk, customBody } from "../util/HTTP.ts";
+  tokenDtoFromEntity,
+} from "../db/models/GoogleTokenDto.ts";
+import { apiUnauth } from "../util/HTTP.ts";
 
 const withBasePath = (path: string) => `/auth/${path}`;
 
 export const routeAuth = (router: Router) => {
-  router.get(withBasePath("google/register"), registerOAuth);
-  router.get(withBasePath("google/refresh"), refreshOAuth);
+  router.get(withBasePath("google/register"), registerAuth);
+  router.get(withBasePath("google/refresh"), verifyAndRefreshToken);
   router.get(withBasePath("google/verify"), verifyIdToken);
-  router.get(withBasePath("mail/send"), sendMail2);
-  router.get(withBasePath("userDetails"), getUserDetails);
+  router.get(withBasePath("google/userDetails"), getUserDetails);
+  router.get(withBasePath("mail/send"), withGmailService, sendMail);
 };
 
-export const registerOAuth = async (ctx: Context, next: Next) => {
-  const url = new URL(ctx.request.url);
+export const registerAuth = async (context: Context, next: Next) => {
+  const url = new URL(context.request.url);
   const obj = new URLSearchParams(url.search);
   const code = obj.get("code");
 
-  let result = { action: "not credentials were written" };
+  const noResult = { action: "not credentials were written" };
+  const noResultStatus = "BLANK";
+  const hasResult = { action: "written google credentials" };
 
-  if (code) {
-    // const tokens = await writeGoogleCreds(code as string);
-    const tokens = await writeGoogleCredsRaw(code as string);
-    const filtered = Object.values(tokens).filter((v) => !(v && v.length > 0));
-    if (filtered.length > 0) {
-      result = { action: "written google credentials" };
-    }
+  let tokens: ITokenEntity | null = null;
+
+  if (!code) {
+    apiOk(context, { body: customBody(noResult, noResultStatus) });
+    return;
   }
 
-  apiOk(ctx, { body: customBody(result) });
+  try {
+    tokens = await writeGoogleCreds(code as string);
+  } catch (error) {
+    consoleError("registerAuth, error: ", error);
+    apiInternalError(context, { body: customBody({}) });
+    return;
+  }
+
+  if (tokens === null) {
+    apiOk(context, { body: customBody(noResult, noResultStatus) });
+    return;
+  }
+  const tokenValues = <any[]>(tokens && Object.values(tokens));
+  const invalidTokenValues = tokenValues.filter((v) => {
+    const isValidString = (v && v.length > 0) || v > 0;
+    return !isValidString;
+  });
+  consoleDebug(
+    "AuthController/registerAuth, invalidTokenValues: ",
+    invalidTokenValues
+  );
+  if (invalidTokenValues.length > 0) {
+    apiOk(context, { body: customBody(noResult, noResultStatus) });
+    return;
+  }
+
+  // assume code is ok
+  apiOk(context, { body: customBody(hasResult) });
   await next();
 };
 
-export const getUserDetails = async (ctx: Context, next: Next) => {
-  const json = await readJson("google_creds.json");
-  const userDetails = await googleUserDetails(json.idToken, json.accessToken);
+export const verifyIdToken = async (context: Context, next: Next) => {
+  const jsonConfig = await readGoogleConfig();
+  const jsonCreds = await readGoogleCreds();
+  if (jsonConfig === null || jsonCreds === null) {
+    apiOk(context, { body: customBody({ action: "not verified" }, "BLANK") });
+    return;
+  }
+  const clientId = jsonConfig.clientId;
+  const clientSecret = jsonConfig.clientSecret;
+  const redirectUri = jsonConfig.redirectUris;
+  const oAuth2Client = new google.auth.OAuth2(
+    clientId,
+    clientSecret,
+    redirectUri
+  );
+  const tokenValid = { action: "Token valid" };
+  const tokenExpired = { action: "Token invalid" };
+  consoleDebug(
+    "AuthController:verifyToken, access_token",
+    jsonCreds.accessToken
+  );
+  try {
+    const resp = await oAuth2Client.getTokenInfo(
+      jsonCreds.accessToken as string
+    );
+    consoleDebug("AuthController:verifyToken, payload, ", resp);
+
+    const isValidResp = resp?.email && resp?.email_verified;
+    if (!isValidResp) {
+      apiBad(context, { body: customBody(tokenExpired, "BLANK") });
+      return;
+    }
+    apiOk(context, {
+      body: customBody({
+        ...tokenValid,
+        email: resp.email,
+        emailVerified: resp.email_verified,
+        accessType: resp.access_type,
+        expiryDate: resp.user_id,
+      }),
+    });
+
+    await next();
+  } catch (error) {
+    consoleError("AuthController:verifyToken, ", error);
+    apiUnauth(context, { body: customBody(tokenExpired, "BLANK") });
+  }
+};
+
+export const refreshAccessToken = async (context: Context, next: Next) => {
+  const resp = await refreshGoogleCreds();
+  if (resp === null) {
+    apiOk(context, {
+      body: customBody({ action: "not refreshed" }, "BLANK"),
+    });
+    return;
+  }
+
+  apiOk(context, { body: customBody({ action: "refreshed" }) });
+  await next();
+};
+
+export const verifyAndRefreshToken = async (context: Context, next: Next) => {
+  await verifyIdToken(context, next);
+  const isTokenInvalid = context.response?.status === 401;
+  if (isTokenInvalid) {
+    await refreshAccessToken(context, next);
+  }
+};
+
+export const getUserDetails = async (context: Context, next: Next) => {
+  const noResult = customBody({ action: "not user details found" }, "BLANK");
+  const json = await readGoogleCreds();
+  consoleDebug("tracing getUserDetails, json: ", json);
+  if (json === null) {
+    apiOk(context, { body: noResult });
+    return;
+  }
+
+  const userDetails = await googleUserDetails(
+    json.idToken as string,
+    json.accessToken as string
+  );
   consoleDebug("tracing getUserDetails, userDetails: ", userDetails);
 
-  const result = userDetails;
-  apiOk(ctx, { body: customBody(result) });
+  if (userDetails === null) {
+    apiOk(context, { body: noResult });
+    return;
+  }
+
+  apiOk(context, { body: customBody({ userDetails }) });
   await next();
 };
 
-// TODO: check resp status before json
-export const googleUserDetails = async (
-  idToken: string,
-  accessToken: string
-) => {
-  const apiUri = "https://www.googleapis.com/oauth2/v1/userinfo";
-  const qsObj = new URLSearchParams({
-    alt: "json",
-    access_token: accessToken,
-  });
-  const headerObj = {
-    Authorization: "Bearer " + idToken,
-  };
-  const url = `${apiUri}?${qsObj.toString()}`;
-  consoleDebug("tracing googleUserDetails: ", url);
-
-  const resp = await fetch(url, {
-    method: "GET",
-    headers: headerObj,
-  });
-  return await resp.json();
-};
-
-export const refreshOAuth = async (ctx: Context, next: Next) => {
-  await refreshGoogleCredsRaw();
-
-  const result = { action: "refreshed access_token" };
-  apiOk(ctx, { body: customBody(result) });
-  await next();
-};
-
-const getGmailService = async () => {
-  const config = await getGoogleConfig();
+const withGmailService = async (context: Context, next: Next) => {
+  const config = await readGoogleConfig();
+  const creds = await readGoogleCreds();
+  if (config === null || creds === null) {
+    const noGmailService = customBody({ action: "No Gmail service" }, "BLANK");
+    apiBad(context, { body: noGmailService });
+    return;
+  }
   const oAuth2Client = new google.auth.OAuth2(
     config.clientId,
     config.clientSecret,
     config.redirectUris[0]
   );
 
-  const json = await readJson("google_creds.json");
-  oAuth2Client.setCredentials(tokenDtoToEntity(json));
-  const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
-  return gmail;
+  oAuth2Client.setCredentials(tokenDtoToEntity(creds));
+  context.state.gmailService = google.gmail({
+    version: "v1",
+    auth: oAuth2Client,
+  });
+  await next();
 };
 
-const encodeMessage = (message: any) => {
-  return encode(message);
-  /*
-  return new Buffer(message)
-    .toString()
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-    */
-};
-
-const createMail = async (options: any) => {
+const createEncodedMail = async (options: any) => {
   const mailComposer = new MailComposer(options);
   const message = await mailComposer.compile().build();
-  return encodeMessage(message);
+  return encode(message);
 };
 
-const sendGMail = async (options: any) => {
-  const gmail = await getGmailService();
-  console.log("tracing sendGmail: ", "got the mail service");
-  const rawMessage = await createMail(options);
-  console.log("tracing sendGmail: ", "created mail");
-  const { data: { id } = {} } = await gmail.users.messages.send({
+const sendGMail = async (
+  gmailService: googleapis.gmail_v1.Gmail,
+  options: any
+) => {
+  const rawMessage = await createEncodedMail(options);
+  consoleDebug("sendEmail, created mail", "");
+
+  const { data: { id } = {} } = await gmailService.users.messages.send({
     userId: "me",
     requestBody: {
       raw: rawMessage,
     },
   });
-  console.log("tracing sendGmail: ", "sent mail");
+  consoleDebug("sendEmail, sent mail", "");
   return id;
 };
 
-export const sendMail = async (ctx: Context, next: Next) => {
+export const sendMail = async (context: Context, next: Next) => {
+  const gmailService = context.state.gmailService;
   const options = {
     to: "kahshiu@gmail.com",
     cc: "kahshiu@gmail.com",
@@ -148,32 +232,11 @@ export const sendMail = async (ctx: Context, next: Next) => {
     ],
   };
 
-  const messageId = await sendGMail(options);
+  const messageId = await sendGMail(gmailService, options);
   console.log(messageId);
 };
 
-export const verifyIdToken = async (ctx: Context, next: Next) => {
-  const json = await readJson("google_client_config.json");
-  const json2 = await readJson("google_creds.json");
-  const clientId = json.web.client_id;
-  const clientSecret = json.web.client_secret;
-  const redirectUri = json.web.redirect_uris;
-  const oAuth2Client = new google.auth.OAuth2(
-    clientId,
-    clientSecret,
-    redirectUri
-  );
-  // const x = tokenDtoToEntity(json2);
-  console.log(json2.accessToken);
-  let resp;
-  try {
-    resp = await oAuth2Client.getTokenInfo(json2.accessToken);
-    consoleDebug("tracing envelop, payload, ", resp);
-  } catch (error) {
-    consoleError("tracing error", error);
-  }
-};
-
+/* TODO: retry sendMail using nodemailer
 export const sendMail2 = async (ctx: Context, next: Next) => {
   const json = await readJson("google_client_config.json");
   const clientId = json.client_id;
@@ -185,7 +248,6 @@ export const sendMail2 = async (ctx: Context, next: Next) => {
     redirectUri
   );
 
-  /*
   oAuth2Client.verifyIdToken(idToken)
 
 
@@ -200,10 +262,8 @@ export const sendMail2 = async (ctx: Context, next: Next) => {
       accessToken: accessToken,
     },
   });
-  */
 };
-/*
- */
+*/
 
 /*
 const generateConfig = (url: any, accessToken: any) => {

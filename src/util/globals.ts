@@ -8,7 +8,7 @@ export const jsonFolder = (path: string) => {
 };
 
 export const environment: Environments = Environments.DEVELOPEMNT;
-export const consoleMode: ConsoleTagTypes = ConsoleTagTypes.TAGS;
+export const consoleMode: ConsoleTagTypes = ConsoleTagTypes.ALL;
 export const consoleTags: ConsoleTags[] = [
   // NOTE: comment the irrelevent ones
   // ConsoleTags.MIDDLEWARE,

@@ -14,4 +14,5 @@ export enum ConsoleTagTypes {
 export enum ConsoleTags {
   "MIDDLEWARE" = "middleware",
   "ENTITY" = "entity",
+  "AUTH" = "auth",
 }

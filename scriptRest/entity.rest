@@ -26,9 +26,28 @@ Content-Type: "application/json"
 {
     "entityId": 1,
     "entityType": 1,
-    "entityName": "mr. beanie",
+    "entityName": "mr. beanie 123",
     "note": "something here"
 }
+
+
+##########################
+## SECTION: Authentication
+##########################
+GET http://localhost:8020/auth/google/register
+
+#######
+GET http://localhost:8020/auth/google/verify
+
+#######
+GET http://localhost:8020/auth/google/refresh
+
+#######
+GET http://localhost:8020/auth/google/userDetails
+
+#######
+GET http://localhost:8020/auth/mail/send
+
 
 ##########################
 ## SECTION: Cron 
@@ -41,20 +60,3 @@ GET http://localhost:8020/cron/pause
 ####
 GET http://localhost:8020/cron/resume
 
-
-##########################
-## SECTION: Authentication
-##########################
-GET http://localhost:8020/auth/google/register
-
-#######
-GET http://localhost:8020/auth/google/refresh
-
-#######
-GET http://localhost:8020/auth/userDetails
-
-#######
-GET http://localhost:8020/auth/google/verify
-
-#######
-GET http://localhost:8020/auth/mail/send
