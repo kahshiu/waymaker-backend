@@ -6,12 +6,11 @@ import {
   getIndividual,
   patchEntity,
   putEntity,
+  quickSearchEntity,
 } from "#services/EntityService.ts";
 import { consoleDebug, consoleError } from "#util/Console.ts";
 import { apiBad, apiInternalError, apiOk, customBody } from "#util/HTTP.ts";
 import { ConsoleTags } from "../util/globalEnums.ts";
-import { HTTP_METHODS } from "https://deno.land/std@0.188.0/http/method.ts";
-import { BODY_TYPES } from "https://deno.land/x/oak@v12.5.0/util.ts";
 
 const withBasePath = (path: string) => `/api/${path}`;
 
@@ -19,6 +18,29 @@ export const routeEntity = (router: Router) => {
   router.get(withBasePath("individual"), hasParamsId, getIndividualRoute);
   router.patch(withBasePath("individual"), hasParamsId, patchIndividualRoute);
   router.post(withBasePath("individual"), postIndividualRoute);
+
+  router.get(withBasePath("entity/search"), searchIndividualRoute);
+};
+
+export const searchIndividualRoute = async (context: Context, next: Next) => {
+  const pgPool: Pool = context.state.pgPool;
+  const params = getQuery(context);
+  consoleDebug("EntityController: searchIndividualRoute, params: ", params, [
+    ConsoleTags.ENTITY,
+  ]);
+  const dto = entityDtoFromPayload(params);
+  consoleDebug("EntityController: searchIndividualRoute, dto: ", dto, [
+    ConsoleTags.ENTITY,
+  ]);
+  try {
+    const client = await pgPool.connect();
+    const result = await quickSearchEntity(client, dto);
+    apiOk(context, { body: customBody(result) });
+    await next();
+  } catch (error) {
+    consoleError("EntityController: searchIndividualRoute, ", error);
+    apiInternalError(context, { body: customBody({}) });
+  }
 };
 
 // NOTE:
@@ -114,4 +136,4 @@ export const postIndividualRoute = async (context: Context, next: Next) => {
     HTTP.OkResponse(ctx, { payload: HTTPPayload(result?.[0] ?? {}) });
     await next();
   }
-  */
+*/

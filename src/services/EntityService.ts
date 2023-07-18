@@ -1,4 +1,4 @@
-import { Client, PoolClient } from "pg/mod.ts";
+import { PoolClient } from "pg/mod.ts";
 import { EntityType } from "#db/dbEnums.ts";
 import {
   createEntityModel,
@@ -10,6 +10,7 @@ import {
   selectEntity,
   updateEntity,
   createEntity,
+  searchEntity,
 } from "#repos/EntityRepository.ts";
 import { consoleError, consoleDebug } from "../util/Console.ts";
 
@@ -74,4 +75,23 @@ export const getIndividual = async (client: PoolClient, entityId: number) => {
 
 export const getCompany = async (client: PoolClient, entityId: number) => {
   return await getEntity(client, entityId, EntityType.COMPANY);
+};
+
+export const quickSearchEntity = async (
+  client: PoolClient,
+  dto: IEntityDto
+) => {
+  const model = entityDtoToModel(dto);
+  consoleDebug("EntityService: quickSearchEntity, model: ", model);
+
+  try {
+    const { rows } = await searchEntity(client, { model });
+    const result = rows.map((entity) => entityDtoFromModel(entity));
+    consoleDebug("EntityService: getEntity, result: ", result);
+    return result;
+  } catch (error) {
+    consoleError("EntityService: getEntity, ", error);
+  } finally {
+    client.release();
+  }
 };
