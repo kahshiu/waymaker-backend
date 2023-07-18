@@ -81,7 +81,15 @@ export const writeGoogleCreds = async (code: string, path?: string) => {
       body: new URLSearchParams(qsObj),
     });
 
-    if (respToken.status !== 200) return null;
+    if (respToken.status !== 200) {
+      tokens = await respToken.json();
+      consoleDebug(
+        "service/AuthGoogle/writeGoogleCreds, authentication failed",
+        tokens,
+        authTags
+      );
+      return null;
+    }
 
     tokens = await respToken.json();
     consoleDebug(

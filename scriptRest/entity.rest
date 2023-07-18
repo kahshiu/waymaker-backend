@@ -42,19 +42,22 @@ GET http://localhost:8020/api/entity/search?
 ##########################
 ## SECTION: Authentication
 ##########################
-GET http://localhost:8020/auth/google/register
+GET http://localhost:8020/api/google/register
 
 #######
-GET http://localhost:8020/auth/google/verify
+GET http://localhost:8020/api/google/verify
 
 #######
-GET http://localhost:8020/auth/google/refresh
+GET http://localhost:8020/api/google/refresh
 
 #######
-GET http://localhost:8020/auth/google/userDetails
+GET http://localhost:8020/api/google/userDetails
 
 #######
-GET http://localhost:8020/mail/send
+GET http://localhost:8020/api/mail/test
+
+#######
+GET http://localhost:8020/api/mail/send
 
 
 ##########################

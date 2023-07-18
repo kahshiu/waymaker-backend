@@ -29,6 +29,7 @@ export const customBodyArr = <TPayload>(
 interface IParams {
   statusCode?: number;
   contentType?: string;
+  location?: string;
   body: any;
 }
 
@@ -36,10 +37,14 @@ const resp = (context: Context, params: IParams) => {
   const statusCode = params.statusCode ?? 200;
   const contentType = params.contentType ?? "application/json";
   const body = params.body ?? {};
+  const location = params.location ?? "";
 
   context.response.type = contentType;
   context.response.status = statusCode;
   context.response.body = params.statusCode === 204 ? null : body;
+  if (statusCode >= 300 && statusCode < 400 && location.length > 0) {
+    context.response.headers.set("location", location);
+  }
 };
 
 // *****************************
@@ -65,6 +70,15 @@ export const apiDetectContent = (context: Context, params: IParams) => {
     return apiOk(context, params);
   }
   return apiNoContent(context, params);
+};
+
+// *****************************
+// status code: 300
+// *****************************
+export const apiRedirect = (context: Context, params: IParams) => {
+  consoleError("Redirect request: ", context.request.url);
+  const statusCode = 302;
+  return resp(context, { ...params, statusCode });
 };
 
 // *****************************

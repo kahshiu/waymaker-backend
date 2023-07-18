@@ -1,7 +1,13 @@
 import { Context, Next, Router } from "oak/mod.ts";
 import { google } from "npm:googleapis@120.0.0";
 import { consoleDebug, consoleError } from "#util/Console.ts";
-import { apiBad, apiInternalError, apiOk, customBody } from "#util/HTTP.ts";
+import {
+  apiBad,
+  apiInternalError,
+  apiOk,
+  apiRedirect,
+  customBody,
+} from "#util/HTTP.ts";
 import { ITokenEntity } from "#db/models/interfaces/GoogleToken.ts";
 import {
   googleUserDetails,
@@ -12,13 +18,13 @@ import {
 } from "../services/AuthGoogle.ts";
 import { apiUnauth } from "../util/HTTP.ts";
 
-const withBasePath = (path: string) => `/auth/${path}`;
+const withGoogle = (path: string) => `/api/google/${path}`;
 
 export const routeAuth = (router: Router) => {
-  router.get(withBasePath("google/register"), registerAuth);
-  router.get(withBasePath("google/refresh"), verifyAndRefreshToken);
-  router.get(withBasePath("google/verify"), verifyIdToken);
-  router.get(withBasePath("google/userDetails"), getUserDetails);
+  router.get(withGoogle("register"), registerAuth);
+  router.get(withGoogle("refresh"), verifyAndRefreshToken);
+  router.get(withGoogle("verify"), verifyIdToken);
+  router.get(withGoogle("userDetails"), getUserDetails);
 };
 
 export const registerAuth = async (context: Context, next: Next) => {
@@ -26,7 +32,7 @@ export const registerAuth = async (context: Context, next: Next) => {
   const obj = new URLSearchParams(url.search);
   const code = obj.get("code");
 
-  const noResult = { action: "not credentials were written" };
+  const noResult = { action: "no credentials were written" };
   const noResultStatus = "BLANK";
   const hasResult = { action: "written google credentials" };
 
@@ -64,7 +70,10 @@ export const registerAuth = async (context: Context, next: Next) => {
   }
 
   // assume code is ok
-  apiOk(context, { body: customBody(hasResult) });
+  apiRedirect(context, {
+    location: "http://localhost:8030/setup/google?result=setup_success",
+    body: customBody(noResult, noResultStatus),
+  });
   await next();
 };
 
